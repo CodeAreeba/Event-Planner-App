@@ -1,44 +1,75 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
-import { RefreshControl, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, RefreshControl, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import PrimaryButton from '../../components/buttons/PrimaryButton';
 import BookingCard from '../../components/cards/BookingCard';
 import EmptyState from '../../components/ui/EmptyState';
 import Loader from '../../components/ui/Loader';
 import { useAuth } from '../../context/AuthContext';
-import { Booking, getBookings } from '../../firebase/bookings';
+import { Booking, cancelBooking, subscribeToBookings, updatePastBookingsStatus } from '../../firebase/bookings';
 import { AppStackNavigationProp } from '../../types/navigation';
 
 const BookingsScreen: React.FC = () => {
     const navigation = useNavigation<AppStackNavigationProp>();
     const { user } = useAuth();
+    const insets = useSafeAreaInsets();
     const [bookings, setBookings] = useState<Booking[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [filter, setFilter] = useState<'all' | 'upcoming' | 'past' | 'cancelled'>('all');
 
     useEffect(() => {
-        if (user) {
-            loadBookings();
-        }
-    }, [user]);
-
-    const loadBookings = async () => {
         if (!user) return;
 
         setLoading(true);
-        const { success, bookings: fetchedBookings } = await getBookings({ userId: user.uid });
-        if (success && fetchedBookings) {
-            setBookings(fetchedBookings);
-        }
-        setLoading(false);
-    };
+
+        // Subscribe to real-time updates
+        const unsubscribe = subscribeToBookings(
+            (fetchedBookings) => {
+                setBookings(fetchedBookings);
+                setLoading(false);
+                setRefreshing(false);
+            },
+            { userId: user.uid }
+        );
+
+        // Cleanup subscription on unmount
+        return () => unsubscribe();
+    }, [user]);
 
     const onRefresh = async () => {
         setRefreshing(true);
-        await loadBookings();
-        setRefreshing(false);
+        // Try to update past bookings status (may fail due to permissions)
+        try {
+            await updatePastBookingsStatus();
+        } catch (error) {
+            console.log('Could not auto-update past bookings (admin only)');
+        }
+        // Real-time listener will automatically update the list
+    };
+
+    const handleCancelBooking = (booking: Booking) => {
+        Alert.alert(
+            'Cancel Booking',
+            `Are you sure you want to cancel your booking for "${booking.serviceName}"?`,
+            [
+                { text: 'No', style: 'cancel' },
+                {
+                    text: 'Yes, Cancel',
+                    style: 'destructive',
+                    onPress: async () => {
+                        const { success } = await cancelBooking(booking.id!);
+                        if (success) {
+                            Alert.alert('Success', 'Booking cancelled successfully');
+                        } else {
+                            Alert.alert('Error', 'Failed to cancel booking. Please try again.');
+                        }
+                    },
+                },
+            ]
+        );
     };
 
     const getFilteredBookings = () => {
@@ -68,7 +99,7 @@ const BookingsScreen: React.FC = () => {
     return (
         <View className="flex-1 bg-gray-50">
             {/* Header */}
-            <View className="bg-white px-6 pt-12 pb-4 border-b border-gray-200">
+            <View className="bg-white px-6 pb-4 border-b border-gray-200" style={{ paddingTop: insets.top + 16 }}>
                 <Text className="text-gray-900 text-2xl font-bold mb-4">
                     My Bookings
                 </Text>
@@ -96,6 +127,7 @@ const BookingsScreen: React.FC = () => {
             {/* Bookings List */}
             <ScrollView
                 className="flex-1 px-6 pt-4"
+                contentContainerStyle={{ paddingBottom: 100 + insets.bottom }}
                 refreshControl={
                     <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
                 }
@@ -120,6 +152,7 @@ const BookingsScreen: React.FC = () => {
                             onPress={() =>
                                 navigation.navigate('BookingDetails', { bookingId: booking.id! })
                             }
+                            onCancel={() => handleCancelBooking(booking)}
                             showCancelButton={true}
                         />
                     ))
@@ -129,7 +162,8 @@ const BookingsScreen: React.FC = () => {
             {/* Create Booking FAB */}
             <TouchableOpacity
                 onPress={() => navigation.navigate('CreateBooking')}
-                className="absolute bottom-24 right-6 bg-primary w-14 h-14 rounded-full items-center justify-center shadow-lg elevation-5"
+                className="absolute right-6 bg-primary w-14 h-14 rounded-full items-center justify-center shadow-lg elevation-5"
+                style={{ bottom: 80 + insets.bottom }}
             >
                 <Ionicons name="add" size={30} color="white" />
             </TouchableOpacity>

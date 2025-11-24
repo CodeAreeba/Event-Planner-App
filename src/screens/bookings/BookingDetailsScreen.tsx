@@ -80,15 +80,40 @@ const BookingDetailsScreen: React.FC = () => {
         }
     };
 
-    const formatDate = (date: Date) => {
+    const formatDate = (date: any) => {
         if (!date) return 'N/A';
-        const d = date instanceof Date ? date : new Date(date);
-        return d.toLocaleDateString('en-US', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        });
+
+        try {
+            let dateObj: Date;
+
+            // Handle Firestore Timestamp
+            if (date && typeof date.toDate === 'function') {
+                dateObj = date.toDate();
+            }
+            // Handle Date object
+            else if (date instanceof Date) {
+                dateObj = date;
+            }
+            // Handle string or number
+            else {
+                dateObj = new Date(date);
+            }
+
+            // Check if date is valid
+            if (isNaN(dateObj.getTime())) {
+                return 'Invalid Date';
+            }
+
+            return dateObj.toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        } catch (error) {
+            console.error('Error formatting date:', error, date);
+            return 'Invalid Date';
+        }
     };
 
     if (loading) {

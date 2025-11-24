@@ -76,7 +76,7 @@ const BookingCard: React.FC<BookingCardProps> = ({
             <View className="flex-row items-center mt-2">
                 <Ionicons name="calendar-outline" size={16} color="#9CA3AF" />
                 <Text className="text-gray-500 text-sm ml-2">
-                    {formatDate(booking.bookingDate)}
+                    {formatDate(booking.date)}
                 </Text>
             </View>
 

@@ -5,6 +5,7 @@ import {
     doc,
     getDoc,
     getDocs,
+    onSnapshot,
     orderBy,
     query,
     Timestamp,
@@ -132,7 +133,6 @@ export const getBookingById = async (
 
 /**
  * Get bookings for a user or provider
- * Includes fallback logic for index errors
  */
 export const getBookings = async (filters?: {
     userId?: string;
@@ -140,69 +140,25 @@ export const getBookings = async (filters?: {
     status?: BookingStatus;
 }): Promise<{ success: boolean; bookings?: Booking[]; error?: string }> => {
     try {
-        let q;
+        let q = query(collection(db, 'bookings'), orderBy('date', 'asc'));
 
-        // Try the optimized query with orderBy first
-        try {
-            q = query(collection(db, 'bookings'), orderBy('createdAt', 'desc'));
-
-            if (filters?.userId) {
-                q = query(q, where('userId', '==', filters.userId));
-            }
-            if (filters?.providerId) {
-                q = query(q, where('providerId', '==', filters.providerId));
-            }
-            if (filters?.status) {
-                q = query(q, where('status', '==', filters.status));
-            }
-
-            const querySnapshot = await getDocs(q);
-            const bookings: Booking[] = querySnapshot.docs.map((doc) => ({
-                id: doc.id,
-                ...doc.data(),
-            })) as Booking[];
-
-            return { success: true, bookings };
-        } catch (indexError: any) {
-            // If index error, fall back to simpler query without orderBy
-            if (indexError.code === 'failed-precondition' || indexError.message?.includes('index')) {
-                console.log('Index not available, using fallback query...');
-
-                // Simpler query without orderBy
-                let fallbackQuery = collection(db, 'bookings');
-                const constraints: any[] = [];
-
-                if (filters?.userId) {
-                    constraints.push(where('userId', '==', filters.userId));
-                }
-                if (filters?.providerId) {
-                    constraints.push(where('providerId', '==', filters.providerId));
-                }
-                if (filters?.status) {
-                    constraints.push(where('status', '==', filters.status));
-                }
-
-                const q = constraints.length > 0
-                    ? query(fallbackQuery, ...constraints)
-                    : fallbackQuery;
-
-                const querySnapshot = await getDocs(q);
-                let bookings: Booking[] = querySnapshot.docs.map((doc) => ({
-                    id: doc.id,
-                    ...doc.data(),
-                })) as Booking[];
-
-                // Sort client-side since we can't use orderBy
-                bookings.sort((a, b) => {
-                    const dateA = a.createdAt instanceof Date ? a.createdAt : new Date(a.createdAt);
-                    const dateB = b.createdAt instanceof Date ? b.createdAt : new Date(b.createdAt);
-                    return dateB.getTime() - dateA.getTime();
-                });
-
-                return { success: true, bookings };
-            }
-            throw indexError; // Re-throw if it's not an index error
+        if (filters?.userId) {
+            q = query(q, where('userId', '==', filters.userId));
         }
+        if (filters?.providerId) {
+            q = query(q, where('providerId', '==', filters.providerId));
+        }
+        if (filters?.status) {
+            q = query(q, where('status', '==', filters.status));
+        }
+
+        const querySnapshot = await getDocs(q);
+        const bookings: Booking[] = querySnapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+        })) as Booking[];
+
+        return { success: true, bookings };
     } catch (error: any) {
         console.error('Get bookings error:', error);
         return { success: false, error: error.message, bookings: [] };
@@ -210,64 +166,144 @@ export const getBookings = async (filters?: {
 };
 
 /**
- * Get upcoming bookings for a user
- * Includes fallback logic for index errors
+ * Subscribe to bookings with real-time updates
+ * Returns an unsubscribe function
  */
-export const getUpcomingBookings = async (
-    userId: string
-): Promise<{ success: boolean; bookings?: Booking[]; error?: string }> => {
+export const subscribeToBookings = (
+    callback: (bookings: Booking[]) => void,
+    filters?: {
+        userId?: string;
+        providerId?: string;
+        status?: BookingStatus;
+    }
+): (() => void) => {
     try {
-        // Try optimized query first
-        try {
-            const q = query(
-                collection(db, 'bookings'),
-                where('userId', '==', userId),
-                where('status', 'in', ['pending', 'confirmed']),
-                orderBy('date', 'asc')
-            );
+        // Try the optimized query with orderBy first
+        let q = query(collection(db, 'bookings'), orderBy('date', 'asc'));
 
-            const querySnapshot = await getDocs(q);
-            const bookings: Booking[] = querySnapshot.docs.map((doc) => ({
-                id: doc.id,
-                ...doc.data(),
-            })) as Booking[];
-
-            // Filter for future dates
-            const now = new Date();
-            const upcomingBookings = bookings.filter(
-                (booking) => new Date(booking.date) >= now
-            );
-
-            return { success: true, bookings: upcomingBookings };
-        } catch (indexError: any) {
-            // Fallback: simpler query without orderBy
-            if (indexError.code === 'failed-precondition' || indexError.message?.includes('index')) {
-                console.log('Index not available for upcoming bookings, using fallback...');
-
-                const q = query(
-                    collection(db, 'bookings'),
-                    where('userId', '==', userId),
-                    where('status', 'in', ['pending', 'confirmed'])
-                );
-
-                const querySnapshot = await getDocs(q);
-                let bookings: Booking[] = querySnapshot.docs.map((doc) => ({
-                    id: doc.id,
-                    ...doc.data(),
-                })) as Booking[];
-
-                // Filter for future dates and sort client-side
-                const now = new Date();
-                const upcomingBookings = bookings
-                    .filter((booking) => new Date(booking.date) >= now)
-                    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
-                return { success: true, bookings: upcomingBookings };
-            }
-            throw indexError;
+        if (filters?.userId) {
+            q = query(q, where('userId', '==', filters.userId));
         }
+        if (filters?.providerId) {
+            q = query(q, where('providerId', '==', filters.providerId));
+        }
+        if (filters?.status) {
+            q = query(q, where('status', '==', filters.status));
+        }
+
+        const unsubscribe = onSnapshot(
+            q,
+            (querySnapshot) => {
+                const bookings: Booking[] = querySnapshot.docs.map((doc) => {
+                    const data = doc.data();
+                    return {
+                        id: doc.id,
+                        ...data,
+                        date: data.date?.toDate ? data.date.toDate() : new Date(data.date),
+                        createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt),
+                        updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : new Date(data.updatedAt),
+                    } as Booking;
+                });
+                callback(bookings);
+            },
+            (error: any) => {
+                // If index error, fall back to simpler query without orderBy
+                if (error.code === 'failed-precondition' || error.message?.includes('index')) {
+                    console.log('Index not available for subscription, using fallback query...');
+
+                    // Simpler query without orderBy
+                    let fallbackQuery = collection(db, 'bookings');
+                    const constraints: any[] = [];
+
+                    if (filters?.userId) {
+                        constraints.push(where('userId', '==', filters.userId));
+                    }
+                    if (filters?.providerId) {
+                        constraints.push(where('providerId', '==', filters.providerId));
+                    }
+                    if (filters?.status) {
+                        constraints.push(where('status', '==', filters.status));
+                    }
+
+                    const fallbackQ = constraints.length > 0
+                        ? query(fallbackQuery, ...constraints)
+                        : fallbackQuery;
+
+                    // Subscribe with fallback query
+                    return onSnapshot(
+                        fallbackQ,
+                        (querySnapshot) => {
+                            let bookings: Booking[] = querySnapshot.docs.map((doc) => {
+                                const data = doc.data();
+                                return {
+                                    id: doc.id,
+                                    ...data,
+                                    date: data.date?.toDate ? data.date.toDate() : new Date(data.date),
+                                    createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt),
+                                    updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : new Date(data.updatedAt),
+                                } as Booking;
+                            });
+
+                            // Sort client-side since we can't use orderBy
+                            bookings.sort((a, b) => {
+                                const dateA = a.date instanceof Date ? a.date : new Date(a.date);
+                                const dateB = b.date instanceof Date ? b.date : new Date(b.date);
+                                return dateA.getTime() - dateB.getTime();
+                            });
+
+                            callback(bookings);
+                        },
+                        (fallbackError) => {
+                            console.error('Fallback subscription error:', fallbackError);
+                            callback([]);
+                        }
+                    );
+                } else {
+                    console.error('Subscription error:', error);
+                    callback([]);
+                }
+            }
+        );
+
+        return unsubscribe;
     } catch (error: any) {
-        console.error('Get upcoming bookings error:', error);
-        return { success: false, error: error.message, bookings: [] };
+        console.error('Subscribe to bookings error:', error);
+        return () => { }; // Return empty unsubscribe function
+    }
+};
+
+/**
+ * Update booking status based on date
+ * Automatically sets past bookings to 'completed'
+ */
+export const updatePastBookingsStatus = async (): Promise<{ success: boolean; updated: number }> => {
+    try {
+        const now = new Date();
+        const q = query(
+            collection(db, 'bookings'),
+            where('status', 'in', ['pending', 'confirmed'])
+        );
+
+        const querySnapshot = await getDocs(q);
+        let updated = 0;
+
+        const updatePromises = querySnapshot.docs.map(async (docSnapshot) => {
+            const data = docSnapshot.data();
+            const bookingDate = data.date?.toDate ? data.date.toDate() : new Date(data.date);
+
+            if (bookingDate < now) {
+                await updateDoc(doc(db, 'bookings', docSnapshot.id), {
+                    status: 'completed',
+                    updatedAt: Timestamp.now(),
+                });
+                updated++;
+            }
+        });
+
+        await Promise.all(updatePromises);
+        return { success: true, updated };
+    } catch (error: any) {
+        console.error('Update past bookings error:', error);
+        return { success: false, updated: 0 };
     }
 };

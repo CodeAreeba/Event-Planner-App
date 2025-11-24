@@ -1,42 +1,19 @@
-export type ServiceStatus = 'pending' | 'approved' | 'rejected';
-
-export type ServiceCategory =
-    | 'Event Planner'
-    | 'Photographer'
-    | 'Caterer'
-    | 'Decorator'
-    | 'Venue'
-    | 'DJ/Music'
-    | 'Makeup Artist'
-    | 'Other';
-
 export interface Service {
-    id: string;
-    providerId: string;
-    providerName: string;
-    providerEmail: string;
-    name: string;
-    category: ServiceCategory;
+    id?: string;
+    title: string;  // Service title (using 'title' as per requirements)
+    name?: string;   // Alias for title (backward compatibility) - auto-generated from title
     description: string;
     price: number;
-    images: string[];
-    location?: string;
-    phone?: string;
-    status: ServiceStatus;
-    approvedBy?: string;
-    approvedAt?: Date;
-    rejectionReason?: string;
-    rating?: number;
-    reviewCount?: number;
+    duration: number;
+    isActive: boolean;
     createdAt: Date;
     updatedAt: Date;
+    createdBy?: string;  // User ID of creator (for tracking)
 }
 
 export interface ServiceFormData {
-    name: string;
-    category: ServiceCategory;
+    title: string;
     description: string;
     price: number;
-    location?: string;
-    phone?: string;
+    duration: number;
 }

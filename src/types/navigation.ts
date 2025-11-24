@@ -27,6 +27,8 @@ export type AppStackParamList = {
     Booking: { service: Service };
     AddService: undefined;
     EditService: { serviceId: string };
+    ServicesList: undefined;
+    UserServices: undefined;
     ProviderProfile: { providerId: string };
     BookingDetails: { bookingId: string };
     CreateBooking: undefined;

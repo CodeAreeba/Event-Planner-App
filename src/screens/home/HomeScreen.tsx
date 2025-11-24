@@ -2,7 +2,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
 import { RefreshControl, ScrollView, Text, TouchableOpacity, View } from 'react-native';
-import PrimaryButton from '../../components/buttons/PrimaryButton';
 import ServiceCard from '../../components/cards/ServiceCard';
 import SearchInput from '../../components/inputs/SearchInput';
 import EmptyState from '../../components/ui/EmptyState';
@@ -10,7 +9,7 @@ import Loader from '../../components/ui/Loader';
 import { CATEGORIES } from '../../constants/categories';
 import { useAuth } from '../../context/AuthContext';
 import { getAnalytics, PlatformAnalytics } from '../../firebase/admin';
-import { getServices, Service } from '../../firebase/services';
+import { getActiveServices, Service } from '../../firebase/services';
 import { AppStackNavigationProp } from '../../types/navigation';
 
 const HomeScreen: React.FC = () => {
@@ -29,8 +28,8 @@ const HomeScreen: React.FC = () => {
     const loadData = async () => {
         setLoading(true);
 
-        // Load services for all users
-        const { success, services: fetchedServices } = await getServices();
+        // Load active services for all users
+        const { success, services: fetchedServices } = await getActiveServices();
         if (success && fetchedServices) {
             setServices(fetchedServices);
         }
@@ -227,13 +226,7 @@ const HomeScreen: React.FC = () => {
                     <EmptyState
                         icon="briefcase-outline"
                         title="No Services Available"
-                        description="Be the first to add a service!"
-                        action={
-                            <PrimaryButton
-                                title="Add Service"
-                                onPress={() => navigation.navigate('AddService')}
-                            />
-                        }
+                        description="Check back later for available services"
                     />
                 ) : (
                     services.slice(0, 5).map((service) => (

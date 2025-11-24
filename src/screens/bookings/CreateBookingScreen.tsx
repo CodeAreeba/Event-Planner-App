@@ -18,6 +18,47 @@ import { useAuth } from '../../context/AuthContext';
 import { createBooking } from '../../firebase/bookings';
 import { AppStackNavigationProp } from '../../types/navigation';
 
+// Helper function to format time from Date object
+const formatTime = (date: Date): string => {
+    return date.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+    });
+};
+
+// Helper function to parse time string to Date object
+const parseTimeToDate = (timeString: string): Date => {
+    const date = new Date();
+    const [time, period] = timeString.split(' ');
+    const [hours, minutes] = time.split(':').map(Number);
+
+    let hour24 = hours;
+    if (period === 'PM' && hours !== 12) hour24 += 12;
+    if (period === 'AM' && hours === 12) hour24 = 0;
+
+    date.setHours(hour24, minutes, 0, 0);
+    return date;
+};
+
+// Helper function to combine date and time into a single Date object
+const combineDateAndTime = (date: Date, timeString: string): Date => {
+    const combined = new Date(date);
+
+    if (timeString) {
+        const [time, period] = timeString.split(' ');
+        const [hours, minutes] = time.split(':').map(Number);
+
+        let hour24 = hours;
+        if (period === 'PM' && hours !== 12) hour24 += 12;
+        if (period === 'AM' && hours === 12) hour24 = 0;
+
+        combined.setHours(hour24, minutes, 0, 0);
+    }
+
+    return combined;
+};
+
 const CreateBookingScreen: React.FC = () => {
     const navigation = useNavigation<AppStackNavigationProp>();
     const { user, userProfile } = useAuth();
@@ -26,9 +67,11 @@ const CreateBookingScreen: React.FC = () => {
     const [userName, setUserName] = useState(userProfile?.name || '');
     const [date, setDate] = useState(new Date());
     const [time, setTime] = useState('');
+    const [timeDate, setTimeDate] = useState(new Date());
     const [price, setPrice] = useState('');
     const [notes, setNotes] = useState('');
     const [showDatePicker, setShowDatePicker] = useState(false);
+    const [showTimePicker, setShowTimePicker] = useState(false);
     const [loading, setLoading] = useState(false);
 
     // Validation errors
@@ -83,6 +126,9 @@ const CreateBookingScreen: React.FC = () => {
 
         setLoading(true);
 
+        // Combine date and time into a single Date object for proper sorting
+        const eventDateTime = combineDateAndTime(date, time);
+
         const bookingData = {
             userId: user?.uid || '',
             userName,
@@ -90,7 +136,7 @@ const CreateBookingScreen: React.FC = () => {
             providerName: 'Provider Name',
             serviceId: 'service-id',
             serviceName,
-            date,
+            date: eventDateTime, // Combined date and time
             time,
             price: Number(price),
             notes,
@@ -118,14 +164,17 @@ const CreateBookingScreen: React.FC = () => {
         }
     };
 
+    const onTimeChange = (event: any, selectedTime?: Date) => {
+        setShowTimePicker(Platform.OS === 'ios');
+        if (selectedTime) {
+            setTimeDate(selectedTime);
+            setTime(formatTime(selectedTime));
+        }
+    };
+
     return (
         <SafeAreaView className="flex-1 bg-gray-50" edges={['bottom']}>
             <ScrollView showsVerticalScrollIndicator={false} className="flex-1 px-6">
-                <View className="py-6">
-                    <Text className="text-gray-900 text-2xl font-bold mb-2">Create Booking</Text>
-                    <Text className="text-gray-600 text-sm">Fill in the details below</Text>
-                </View>
-
                 <FormInput
                     label="Service Name"
                     value={serviceName}
@@ -176,15 +225,32 @@ const CreateBookingScreen: React.FC = () => {
                     />
                 )}
 
-                <FormInput
-                    label="Time"
-                    value={time}
-                    onChangeText={setTime}
-                    placeholder="e.g., 10:00 AM"
-                    icon="time-outline"
-                    error={errors.time}
-                    required
-                />
+                <View className="mb-4">
+                    <Text className="text-gray-700 text-sm font-semibold mb-2">
+                        Time <Text className="text-red-500">*</Text>
+                    </Text>
+                    <TouchableOpacity
+                        onPress={() => setShowTimePicker(true)}
+                        className="flex-row items-center bg-white rounded-xl px-4 py-3 border border-gray-200"
+                    >
+                        <Ionicons name="time-outline" size={20} color="#9CA3AF" style={{ marginRight: 12 }} />
+                        <Text className={`flex-1 text-sm ${time ? 'text-gray-900' : 'text-gray-400'}`}>
+                            {time || 'Select time'}
+                        </Text>
+                    </TouchableOpacity>
+                    {errors.time ? (
+                        <Text className="text-red-500 text-xs mt-1">{errors.time}</Text>
+                    ) : null}
+                </View>
+
+                {showTimePicker && (
+                    <DateTimePicker
+                        value={timeDate}
+                        mode="time"
+                        display="default"
+                        onChange={onTimeChange}
+                    />
+                )}
 
                 <FormInput
                     label="Price"

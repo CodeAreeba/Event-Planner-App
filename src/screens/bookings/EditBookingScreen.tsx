@@ -18,6 +18,47 @@ import LoadingState from '../../components/common/LoadingState';
 import { getBookingById, updateBooking } from '../../firebase/bookings';
 import { AppStackNavigationProp, AppStackParamList } from '../../types/navigation';
 
+// Helper function to format time from Date object
+const formatTime = (date: Date): string => {
+    return date.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+    });
+};
+
+// Helper function to parse time string to Date object
+const parseTimeToDate = (timeString: string): Date => {
+    const date = new Date();
+    const [time, period] = timeString.split(' ');
+    const [hours, minutes] = time.split(':').map(Number);
+
+    let hour24 = hours;
+    if (period === 'PM' && hours !== 12) hour24 += 12;
+    if (period === 'AM' && hours === 12) hour24 = 0;
+
+    date.setHours(hour24, minutes, 0, 0);
+    return date;
+};
+
+// Helper function to combine date and time into a single Date object
+const combineDateAndTime = (date: Date, timeString: string): Date => {
+    const combined = new Date(date);
+
+    if (timeString) {
+        const [time, period] = timeString.split(' ');
+        const [hours, minutes] = time.split(':').map(Number);
+
+        let hour24 = hours;
+        if (period === 'PM' && hours !== 12) hour24 += 12;
+        if (period === 'AM' && hours === 12) hour24 = 0;
+
+        combined.setHours(hour24, minutes, 0, 0);
+    }
+
+    return combined;
+};
+
 type EditBookingRouteProp = RouteProp<AppStackParamList, 'EditBooking'>;
 
 const EditBookingScreen: React.FC = () => {
@@ -29,9 +70,11 @@ const EditBookingScreen: React.FC = () => {
     const [userName, setUserName] = useState('');
     const [date, setDate] = useState(new Date());
     const [time, setTime] = useState('');
+    const [timeDate, setTimeDate] = useState(new Date());
     const [price, setPrice] = useState('');
     const [notes, setNotes] = useState('');
     const [showDatePicker, setShowDatePicker] = useState(false);
+    const [showTimePicker, setShowTimePicker] = useState(false);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
 
@@ -52,8 +95,33 @@ const EditBookingScreen: React.FC = () => {
         if (success && booking) {
             setServiceName(booking.serviceName || '');
             setUserName(booking.userName || '');
-            setDate(booking.date instanceof Date ? booking.date : new Date(booking.date));
-            setTime(booking.time || '');
+
+            // Handle date conversion - booking.date should already be a Date from getBookingById
+            let bookingDate = new Date();
+            if (booking.date) {
+                if (booking.date instanceof Date) {
+                    bookingDate = booking.date;
+                } else if (typeof booking.date.toDate === 'function') {
+                    // Fallback in case Timestamp wasn't converted
+                    bookingDate = booking.date.toDate();
+                } else {
+                    bookingDate = new Date(booking.date);
+                }
+            }
+            setDate(bookingDate);
+
+            const bookingTime = booking.time || '';
+            setTime(bookingTime);
+            // Parse time string to Date object for the picker
+            if (bookingTime) {
+                try {
+                    setTimeDate(parseTimeToDate(bookingTime));
+                } catch (error) {
+                    console.error('Error parsing time:', error);
+                    setTimeDate(new Date());
+                }
+            }
+
             setPrice(booking.price?.toString() || '');
             setNotes(booking.notes || '');
         }
@@ -104,10 +172,13 @@ const EditBookingScreen: React.FC = () => {
 
         setSaving(true);
 
+        // Combine date and time into a single Date object for proper sorting
+        const eventDateTime = combineDateAndTime(date, time);
+
         const updates = {
             serviceName,
             userName,
-            date,
+            date: eventDateTime, // Combined date and time
             time,
             price: Number(price),
             notes,
@@ -135,6 +206,14 @@ const EditBookingScreen: React.FC = () => {
         }
     };
 
+    const onTimeChange = (event: any, selectedTime?: Date) => {
+        setShowTimePicker(Platform.OS === 'ios');
+        if (selectedTime) {
+            setTimeDate(selectedTime);
+            setTime(formatTime(selectedTime));
+        }
+    };
+
     if (loading) {
         return <LoadingState message="Loading booking..." />;
     }
@@ -142,11 +221,6 @@ const EditBookingScreen: React.FC = () => {
     return (
         <SafeAreaView className="flex-1 bg-gray-50" edges={['bottom']}>
             <ScrollView showsVerticalScrollIndicator={false} className="flex-1 px-6">
-                <View className="py-6">
-                    <Text className="text-gray-900 text-2xl font-bold mb-2">Edit Booking</Text>
-                    <Text className="text-gray-600 text-sm">Update booking details</Text>
-                </View>
-
                 <FormInput
                     label="Service Name"
                     value={serviceName}
@@ -197,15 +271,32 @@ const EditBookingScreen: React.FC = () => {
                     />
                 )}
 
-                <FormInput
-                    label="Time"
-                    value={time}
-                    onChangeText={setTime}
-                    placeholder="e.g., 10:00 AM"
-                    icon="time-outline"
-                    error={errors.time}
-                    required
-                />
+                <View className="mb-4">
+                    <Text className="text-gray-700 text-sm font-semibold mb-2">
+                        Time <Text className="text-red-500">*</Text>
+                    </Text>
+                    <TouchableOpacity
+                        onPress={() => setShowTimePicker(true)}
+                        className="flex-row items-center bg-white rounded-xl px-4 py-3 border border-gray-200"
+                    >
+                        <Ionicons name="time-outline" size={20} color="#9CA3AF" style={{ marginRight: 12 }} />
+                        <Text className={`flex-1 text-sm ${time ? 'text-gray-900' : 'text-gray-400'}`}>
+                            {time || 'Select time'}
+                        </Text>
+                    </TouchableOpacity>
+                    {errors.time ? (
+                        <Text className="text-red-500 text-xs mt-1">{errors.time}</Text>
+                    ) : null}
+                </View>
+
+                {showTimePicker && (
+                    <DateTimePicker
+                        value={timeDate}
+                        mode="time"
+                        display="default"
+                        onChange={onTimeChange}
+                    />
+                )}
 
                 <FormInput
                     label="Price"

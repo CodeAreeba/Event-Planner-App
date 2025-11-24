@@ -3,6 +3,7 @@ import React from 'react';
 import { AppStackParamList } from '../types/navigation';
 
 // Import navigators and screens
+import ServicesListScreen from '../screens/admin/ServicesListScreen';
 import BookingDetailsScreen from '../screens/bookings/BookingDetailsScreen';
 import BookingScreen from '../screens/bookings/BookingScreen';
 import CreateBookingScreen from '../screens/bookings/CreateBookingScreen';
@@ -11,6 +12,7 @@ import EditProfileScreen from '../screens/profile/EditProfileScreen';
 import AddServiceScreen from '../screens/services/AddServiceScreen';
 import EditServiceScreen from '../screens/services/EditServiceScreen';
 import ServiceDetailsScreen from '../screens/services/ServiceDetailsScreen';
+import UserServicesScreen from '../screens/user/UserServicesScreen';
 import Tabs from './Tabs';
 
 const Stack = createNativeStackNavigator<AppStackParamList>();
@@ -58,6 +60,16 @@ const AppStack: React.FC = () => {
                 name="EditBooking"
                 component={EditBookingScreen}
                 options={{ headerShown: true, title: 'Edit Booking' }}
+            />
+            <Stack.Screen
+                name="ServicesList"
+                component={ServicesListScreen}
+                options={{ headerShown: false }}
+            />
+            <Stack.Screen
+                name="UserServices"
+                component={UserServicesScreen}
+                options={{ headerShown: false }}
             />
             <Stack.Screen
                 name="EditProfile"
