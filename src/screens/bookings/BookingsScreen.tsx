@@ -13,7 +13,7 @@ import { AppStackNavigationProp } from '../../types/navigation';
 
 const BookingsScreen: React.FC = () => {
     const navigation = useNavigation<AppStackNavigationProp>();
-    const { user } = useAuth();
+    const { user, isAdmin } = useAuth();
     const insets = useSafeAreaInsets();
     const [bookings, setBookings] = useState<Booking[]>([]);
     const [loading, setLoading] = useState(true);
@@ -26,18 +26,20 @@ const BookingsScreen: React.FC = () => {
         setLoading(true);
 
         // Subscribe to real-time updates
+        // If admin, fetch all bookings (pass undefined for userId)
+        // If regular user, fetch only their bookings
         const unsubscribe = subscribeToBookings(
             (fetchedBookings) => {
                 setBookings(fetchedBookings);
                 setLoading(false);
                 setRefreshing(false);
             },
-            { userId: user.uid }
+            isAdmin ? {} : { userId: user.uid }
         );
 
         // Cleanup subscription on unmount
         return () => unsubscribe();
-    }, [user]);
+    }, [user, isAdmin]);
 
     const onRefresh = async () => {
         setRefreshing(true);
@@ -101,7 +103,7 @@ const BookingsScreen: React.FC = () => {
             {/* Header */}
             <View className="bg-white px-6 pb-4 border-b border-gray-200" style={{ paddingTop: insets.top + 16 }}>
                 <Text className="text-gray-900 text-2xl font-bold mb-4">
-                    My Bookings
+                    {isAdmin ? 'Booking Management' : 'My Bookings'}
                 </Text>
 
                 {/* Filter Tabs */}
@@ -154,6 +156,7 @@ const BookingsScreen: React.FC = () => {
                             }
                             onCancel={() => handleCancelBooking(booking)}
                             showCancelButton={true}
+                            showUserInfo={isAdmin}
                         />
                     ))
                 )}

@@ -4,6 +4,8 @@ import { AppStackParamList } from '../types/navigation';
 
 // Import navigators and screens
 import ServicesListScreen from '../screens/admin/ServicesListScreen';
+import EditUserScreen from '../screens/admin/Users/EditUserScreen';
+import UserListScreen from '../screens/admin/Users/UserListScreen';
 import BookingDetailsScreen from '../screens/bookings/BookingDetailsScreen';
 import BookingScreen from '../screens/bookings/BookingScreen';
 import CreateBookingScreen from '../screens/bookings/CreateBookingScreen';
@@ -75,6 +77,16 @@ const AppStack: React.FC = () => {
                 name="EditProfile"
                 component={EditProfileScreen}
                 options={{ headerShown: true, title: 'Edit Profile' }}
+            />
+            <Stack.Screen
+                name="UserList"
+                component={UserListScreen}
+                options={{ headerShown: false }}
+            />
+            <Stack.Screen
+                name="EditUser"
+                component={EditUserScreen}
+                options={{ headerShown: true, title: 'Edit User' }}
             />
         </Stack.Navigator>
     );

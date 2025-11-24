@@ -36,21 +36,36 @@ const AdminDashboardScreen: React.FC = () => {
         loadAnalytics();
     };
 
-    const StatCard = ({ icon, title, value, color }: any) => (
-        <View className="bg-white rounded-2xl p-4 mb-3 shadow-sm">
-            <View className="flex-row items-center justify-between">
-                <View className="flex-row items-center flex-1">
-                    <View className={`w-12 h-12 rounded-full items-center justify-center`} style={{ backgroundColor: color + '20' }}>
-                        <Ionicons name={icon} size={24} color={color} />
+    const StatCard = ({ icon, title, value, color, showChevron, onPress }: any) => {
+        const CardContent = (
+            <View className="bg-white rounded-2xl p-4 mb-3 shadow-sm">
+                <View className="flex-row items-center justify-between">
+                    <View className="flex-row items-center flex-1">
+                        <View className={`w-12 h-12 rounded-full items-center justify-center`} style={{ backgroundColor: color + '20' }}>
+                            <Ionicons name={icon} size={24} color={color} />
+                        </View>
+                        <View className="ml-3 flex-1">
+                            <Text className="text-gray-500 text-xs font-medium">{title}</Text>
+                            <Text className="text-gray-900 text-2xl font-bold mt-1">{value}</Text>
+                        </View>
                     </View>
-                    <View className="ml-3 flex-1">
-                        <Text className="text-gray-500 text-xs font-medium">{title}</Text>
-                        <Text className="text-gray-900 text-2xl font-bold mt-1">{value}</Text>
-                    </View>
+                    {showChevron && (
+                        <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+                    )}
                 </View>
             </View>
-        </View>
-    );
+        );
+
+        if (onPress) {
+            return (
+                <TouchableOpacity onPress={onPress} activeOpacity={0.7}>
+                    {CardContent}
+                </TouchableOpacity>
+            );
+        }
+
+        return CardContent;
+    };
 
     const QuickActionCard = ({ icon, title, subtitle, color, onPress }: any) => (
         <TouchableOpacity
@@ -105,18 +120,24 @@ const AdminDashboardScreen: React.FC = () => {
                                 title="Total Users"
                                 value={analytics.totalUsers}
                                 color="#6366F1"
+                                showChevron={true}
+                                onPress={() => navigation.navigate('UserList')}
                             />
                             <StatCard
                                 icon="briefcase"
                                 title="Total Services"
                                 value={analytics.totalServices}
                                 color="#10B981"
+                                showChevron={true}
+                                onPress={() => navigation.navigate('ServicesList')}
                             />
                             <StatCard
                                 icon="calendar"
                                 title="Total Bookings"
                                 value={analytics.totalBookings}
                                 color="#F59E0B"
+                                showChevron={true}
+                                onPress={() => navigation.navigate('Bookings')}
                             />
                             <StatCard
                                 icon="time"
@@ -139,7 +160,7 @@ const AdminDashboardScreen: React.FC = () => {
                         title="Manage Users"
                         subtitle="View and manage all users"
                         color="#6366F1"
-                        onPress={() => {/* Navigate to User Management */ }}
+                        onPress={() => navigation.navigate('UserList')}
                     />
                     <QuickActionCard
                         icon="checkmark-circle-outline"

@@ -34,6 +34,8 @@ export type AppStackParamList = {
     CreateBooking: undefined;
     EditBooking: { bookingId: string };
     EditProfile: undefined;
+    UserList: undefined;
+    EditUser: { userId: string };
 };
 
 // Root Stack Param List

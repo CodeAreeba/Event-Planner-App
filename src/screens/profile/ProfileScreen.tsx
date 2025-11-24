@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
+import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { CompositeNavigationProp, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import React from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import ProfileCard from '../../components/cards/ProfileCard';
@@ -56,26 +56,7 @@ const ProfileScreen: React.FC = () => {
             {/* Menu Options */}
             <View className="px-6">
                 <View className="bg-white rounded-2xl shadow-sm overflow-hidden mb-6">
-                    {/* Services Management for Admin */}
-                    {userProfile.role === 'admin' && (
-                        <TouchableOpacity
-                            onPress={() => navigation.navigate('ServicesList')}
-                            className="flex-row items-center p-4 border-b border-gray-100"
-                        >
-                            <View className="bg-primary/10 p-2 rounded-lg mr-4">
-                                <Ionicons name="briefcase" size={24} color="#6366F1" />
-                            </View>
-                            <View className="flex-1">
-                                <Text className="text-gray-900 text-base font-semibold">
-                                    Services Management
-                                </Text>
-                                <Text className="text-gray-500 text-sm">
-                                    Add, edit, and manage services
-                                </Text>
-                            </View>
-                            <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
-                        </TouchableOpacity>
-                    )}
+
 
                     {/* View Services for Regular Users */}
                     {userProfile.role !== 'admin' && (
@@ -98,23 +79,7 @@ const ProfileScreen: React.FC = () => {
                         </TouchableOpacity>
                     )}
 
-                    <TouchableOpacity
-                        onPress={() => navigation.navigate('Bookings')}
-                        className="flex-row items-center p-4 border-b border-gray-100"
-                    >
-                        <View className="bg-blue-50 p-2 rounded-lg mr-4">
-                            <Ionicons name="calendar" size={24} color="#3B82F6" />
-                        </View>
-                        <View className="flex-1">
-                            <Text className="text-gray-900 text-base font-semibold">
-                                My Bookings
-                            </Text>
-                            <Text className="text-gray-500 text-sm">
-                                View your booking history
-                            </Text>
-                        </View>
-                        <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
-                    </TouchableOpacity>
+
 
                     <TouchableOpacity
                         onPress={handleLogout}

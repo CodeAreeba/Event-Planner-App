@@ -9,6 +9,7 @@ interface BookingCardProps {
     onPress?: () => void;
     onCancel?: () => void;
     showCancelButton?: boolean;
+    showUserInfo?: boolean;
 }
 
 const BookingCard: React.FC<BookingCardProps> = ({
@@ -16,6 +17,7 @@ const BookingCard: React.FC<BookingCardProps> = ({
     onPress,
     onCancel,
     showCancelButton = false,
+    showUserInfo = false,
 }) => {
     const getStatusColor = (status: string) => {
         switch (status) {
@@ -54,6 +56,16 @@ const BookingCard: React.FC<BookingCardProps> = ({
                     </Text>
                 </View>
             </View>
+
+            {/* User Info (Admin Only) */}
+            {showUserInfo && (
+                <View className="flex-row items-center mb-2">
+                    <Ionicons name="person-outline" size={16} color="#6B7280" />
+                    <Text className="text-gray-600 text-sm ml-2">
+                        Booked by: <Text className="font-semibold text-gray-900">{booking.userName}</Text>
+                    </Text>
+                </View>
+            )}
 
             {/* Date & Time */}
             <View className="flex-row items-center mb-2">
