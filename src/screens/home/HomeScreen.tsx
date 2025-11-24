@@ -67,8 +67,10 @@ const HomeScreen: React.FC = () => {
     if (isAdmin) {
         return (
             <ScrollView
-                className="flex-1"
-                style={{ backgroundColor: '#F9FAFB' }}
+                style={{ flex: 1, backgroundColor: '#F9FAFB' }}
+                contentContainerStyle={{ paddingBottom: 24 }}
+                showsVerticalScrollIndicator={true}
+                nestedScrollEnabled={true}
                 refreshControl={
                     <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
                 }
@@ -159,7 +161,10 @@ const HomeScreen: React.FC = () => {
     // Regular User Dashboard View
     return (
         <ScrollView
-            className="flex-1 bg-gray-50"
+            style={{ flex: 1, backgroundColor: '#F9FAFB' }}
+            contentContainerStyle={{ paddingBottom: 24 }}
+            showsVerticalScrollIndicator={true}
+            nestedScrollEnabled={true}
             refreshControl={
                 <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
             }

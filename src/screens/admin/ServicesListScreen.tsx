@@ -7,7 +7,7 @@ import ServiceCard from '../../components/cards/ServiceCard';
 import EmptyState from '../../components/ui/EmptyState';
 import Loader from '../../components/ui/Loader';
 import { useAuth } from '../../context/AuthContext';
-import { deleteService, subscribeToServices } from '../../firebase/services';
+import { deleteService, subscribeToServices, toggleServiceStatus } from '../../firebase/services';
 import { AppStackNavigationProp } from '../../types/navigation';
 import { Service } from '../../types/service';
 
@@ -17,6 +17,7 @@ const ServicesListScreen: React.FC = () => {
     const [services, setServices] = useState<Service[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    const [togglingServiceId, setTogglingServiceId] = useState<string | null>(null);
 
     // Role-based access control - Admin only
     useEffect(() => {
@@ -76,6 +77,31 @@ const ServicesListScreen: React.FC = () => {
         );
     };
 
+    const handleToggleStatus = (service: Service, newStatus: boolean) => {
+        const action = newStatus ? 'activate' : 'deactivate';
+        Alert.alert(
+            `${action.charAt(0).toUpperCase() + action.slice(1)} Service`,
+            `Are you sure you want to ${action} "${service.title || service.name}"?`,
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: action.charAt(0).toUpperCase() + action.slice(1),
+                    onPress: async () => {
+                        setTogglingServiceId(service.id!);
+                        const { success, error } = await toggleServiceStatus(service.id!, newStatus);
+                        setTogglingServiceId(null);
+                        
+                        if (success) {
+                            Alert.alert('Success', `Service ${action}d successfully`);
+                        } else {
+                            Alert.alert('Error', error || `Failed to ${action} service`);
+                        }
+                    },
+                },
+            ]
+        );
+    };
+
     // Show access denied message if not admin
     if (!isAdmin) {
         return (
@@ -127,8 +153,10 @@ const ServicesListScreen: React.FC = () => {
                                 service={service}
                                 onEdit={() => handleEdit(service)}
                                 onDelete={() => handleDelete(service)}
+                                onToggleStatus={(newStatus) => handleToggleStatus(service, newStatus)}
                                 showActions={true}
                                 showStatus={true}
+                                isToggling={togglingServiceId === service.id}
                             />
                         ))
                     )}

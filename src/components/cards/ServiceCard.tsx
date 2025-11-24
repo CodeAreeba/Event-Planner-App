@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { Switch, Text, TouchableOpacity, View } from 'react-native';
 import { Service } from '../../types/service';
 import { formatCurrency } from '../../utils/format';
 
@@ -9,8 +9,10 @@ interface ServiceCardProps {
     onPress?: () => void;
     onEdit?: () => void;
     onDelete?: () => void;
+    onToggleStatus?: (isActive: boolean) => void;
     showActions?: boolean;
     showStatus?: boolean;
+    isToggling?: boolean;
 }
 
 const ServiceCard: React.FC<ServiceCardProps> = ({
@@ -18,8 +20,10 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
     onPress,
     onEdit,
     onDelete,
+    onToggleStatus,
     showActions = false,
     showStatus = false,
+    isToggling = false,
 }) => {
     return (
         <TouchableOpacity
@@ -35,10 +39,24 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
                     </Text>
                 </View>
                 {showStatus && (
-                    <View className={`px-3 py-1 rounded-full ${service.isActive ? 'bg-green-100' : 'bg-red-100'}`}>
-                        <Text className={`text-xs font-semibold ${service.isActive ? 'text-green-800' : 'text-red-800'}`}>
-                            {service.isActive ? 'Active' : 'Inactive'}
-                        </Text>
+                    <View className="flex-row items-center gap-2">
+                        <View className={`px-3 py-1 rounded-full ${service.isActive ? 'bg-green-100' : 'bg-red-100'}`}>
+                            <Text className={`text-xs font-semibold ${service.isActive ? 'text-green-800' : 'text-red-800'}`}>
+                                {service.isActive ? 'Active' : 'Inactive'}
+                            </Text>
+                        </View>
+                        {onToggleStatus && (
+                            <Switch
+                                value={service.isActive}
+                                onValueChange={(value) => {
+                                    onToggleStatus(value);
+                                }}
+                                disabled={isToggling}
+                                trackColor={{ false: '#EF4444', true: '#10B981' }}
+                                thumbColor={service.isActive ? '#FFFFFF' : '#FFFFFF'}
+                                ios_backgroundColor="#EF4444"
+                            />
+                        )}
                     </View>
                 )}
             </View>

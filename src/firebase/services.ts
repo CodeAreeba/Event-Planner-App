@@ -313,6 +313,26 @@ export const deleteService = async (
 };
 
 /**
+ * Toggle service active status
+ */
+export const toggleServiceStatus = async (
+    serviceId: string,
+    isActive: boolean
+): Promise<{ success: boolean; error?: string }> => {
+    try {
+        const serviceRef = doc(db, 'services', serviceId);
+        await updateDoc(serviceRef, {
+            isActive,
+            updatedAt: Timestamp.now(),
+        });
+        return { success: true };
+    } catch (error: any) {
+        console.error('Toggle service status error:', error);
+        return { success: false, error: error.message };
+    }
+};
+
+/**
  * Get a single service by ID
  */
 export const getServiceById = async (
