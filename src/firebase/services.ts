@@ -216,7 +216,8 @@ export const subscribeToServices = (
  * Create a new service
  */
 export const createService = async (
-    serviceData: Omit<Service, 'id' | 'createdAt' | 'updatedAt' | 'isActive' | 'createdBy'>
+    serviceData: Omit<Service, 'id' | 'createdAt' | 'updatedAt' | 'isActive' | 'createdBy'>,
+    userId?: string
 ): Promise<{ success: boolean; serviceId?: string; error?: string }> => {
     try {
         // Validation
@@ -234,7 +235,7 @@ export const createService = async (
             return { success: false, error: 'Duration must be greater than 0' };
         }
 
-        const serviceWithDefaults = {
+        const serviceWithDefaults: any = {
             ...serviceData,
             title: title.trim(),
             name: title.trim(), // Keep name in sync with title for backward compatibility
@@ -242,6 +243,11 @@ export const createService = async (
             createdAt: Timestamp.now(),
             updatedAt: Timestamp.now(),
         };
+
+        // Add createdBy if userId is provided
+        if (userId) {
+            serviceWithDefaults.createdBy = userId;
+        }
 
         const docRef = await addDoc(collection(db, 'services'), serviceWithDefaults);
         return { success: true, serviceId: docRef.id };

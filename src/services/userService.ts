@@ -107,12 +107,14 @@ export const updateUser = async (
         const userRef = doc(db, 'users', userId);
 
         // Remove undefined fields to avoid Firestore error
-        const sanitizedUpdates = Object.entries(updates).reduce((acc, [key, value]) => {
+        // Remove undefined fields to avoid Firestore error
+        const sanitizedUpdates: any = {};
+        Object.keys(updates).forEach((key) => {
+            const value = (updates as any)[key];
             if (value !== undefined) {
-                acc[key] = value;
+                sanitizedUpdates[key] = value;
             }
-            return acc;
-        }, {} as any);
+        });
 
         await updateDoc(userRef, {
             ...sanitizedUpdates,

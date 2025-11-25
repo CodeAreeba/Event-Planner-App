@@ -23,6 +23,7 @@ export type TabParamList = {
 // App Stack Param List
 export type AppStackParamList = {
     MainTabs: undefined;
+    Search: undefined;
     ServiceDetails: { serviceId: string };
     Booking: { service: Service };
     AddService: undefined;

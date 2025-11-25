@@ -38,16 +38,26 @@ service cloud.firestore {
                          .hasAny(['role', 'status', 'isDeleted', 'deletedAt', 'uid', 'email']);
     }
     
+    // Helper function to check if user is a provider
+    function isProvider() {
+      return request.auth != null && 
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'provider';
+    }
+    
     // Services collection
     match /services/{serviceId} {
       // Anyone can read active services (but blocked/deleted users are blocked at app level)
       allow read: if true;
       
-      // Only admins can create services
-      allow create: if isAdmin();
+      // Admins and providers can create services
+      allow create: if isAdmin() || (isActiveUser() && isProvider());
       
-      // Only admins can update or delete services
-      allow update, delete: if isAdmin();
+      // Admins can update/delete any service
+      // Providers can only update/delete their own services
+      allow update, delete: if isAdmin() || 
+                               (isActiveUser() && isProvider() && 
+                                request.auth.uid == resource.data.createdBy);
     }
     
     // Bookings collection
@@ -58,6 +68,12 @@ service cloud.firestore {
                      (isActiveUser() && 
                       (request.auth.uid == resource.data.userId || 
                        request.auth.uid == resource.data.providerId));
+      
+      // Allow list/query operations when filtering by userId or providerId
+      allow list: if isAdmin() || 
+                     (isActiveUser() && 
+                      (request.query.limit <= 100 && 
+                       (request.auth.uid in resource.data.values().toSet())));
       
       // Only active users can create bookings
       allow create: if isActiveUser();

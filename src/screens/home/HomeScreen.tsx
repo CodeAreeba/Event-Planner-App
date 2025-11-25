@@ -10,6 +10,7 @@ import { useAuth } from '../../context/AuthContext';
 import { getActiveServices, Service } from '../../firebase/services';
 import { AppStackNavigationProp } from '../../types/navigation';
 import AdminDashboardScreen from '../admin/AdminDashboardScreen';
+import ProviderDashboardScreen from '../provider/ProviderDashboardScreen';
 
 const HomeScreen: React.FC = () => {
     const navigation = useNavigation<AppStackNavigationProp>();
@@ -56,6 +57,11 @@ const HomeScreen: React.FC = () => {
     // Admin Dashboard View
     if (isAdmin) {
         return <AdminDashboardScreen />;
+    }
+
+    // Provider Dashboard View
+    if (userProfile?.role === 'provider') {
+        return <ProviderDashboardScreen />;
     }
 
     // Regular User Dashboard View

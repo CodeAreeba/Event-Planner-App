@@ -3,7 +3,7 @@ import { storage } from './config';
 
 // Flag to check if Storage is enabled
 // Set to false if you haven't enabled Firebase Storage yet
-const STORAGE_ENABLED = false;
+const STORAGE_ENABLED = true;
 
 export interface UploadProgress {
     progress: number;
