@@ -113,19 +113,8 @@ const EditBookingScreen: React.FC = () => {
       setServiceName(booking.serviceName || "");
       setUserName(booking.userName || "");
 
-      // Handle date conversion - booking.date should already be a Date from getBookingById
-      let bookingDate = new Date();
-      if (booking.date) {
-        if (booking.date instanceof Date) {
-          bookingDate = booking.date;
-        } else if (typeof booking.date.toDate === "function") {
-          // Fallback in case Timestamp wasn't converted
-          bookingDate = booking.date.toDate();
-        } else {
-          bookingDate = new Date(booking.date);
-        }
-      }
-      setDate(bookingDate);
+      // Handle date - booking.date is now always a Date from getBookingById
+      setDate(booking.date || new Date());
 
       const bookingTime = booking.time || "";
       setTime(bookingTime);
@@ -238,7 +227,10 @@ const EditBookingScreen: React.FC = () => {
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50" edges={["bottom"]}>
-      <ScrollView showsVerticalScrollIndicator={false} className="flex-1 mt-4 px-6">
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        className="flex-1 mt-4 px-6"
+      >
         {/* Service Name - Read Only */}
         <View className="mb-4">
           <Text className="text-gray-700 text-sm font-semibold mb-2">

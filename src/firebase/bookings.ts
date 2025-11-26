@@ -240,7 +240,14 @@ export const getBookingById = async (
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
-            const booking = { id: docSnap.id, ...docSnap.data() } as Booking;
+            const data = docSnap.data();
+            const booking: Booking = {
+                id: docSnap.id,
+                ...data,
+                date: data.date?.toDate ? data.date.toDate() : new Date(data.date),
+                createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt),
+                updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : new Date(data.updatedAt),
+            } as Booking;
             return { success: true, booking };
         } else {
             return { success: false, error: 'Booking not found' };
