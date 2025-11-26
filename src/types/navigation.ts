@@ -2,7 +2,7 @@
  * Navigation type definitions for React Navigation
  */
 
-import { NavigationProp, RouteProp } from '@react-navigation/native';
+import { NavigationProp, NavigatorScreenParams, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { Service } from './service';
@@ -24,7 +24,7 @@ export type TabParamList = {
 
 // App Stack Param List
 export type AppStackParamList = {
-    MainTabs: undefined;
+    MainTabs: NavigatorScreenParams<TabParamList> | undefined;
     Search: undefined;
     ServiceDetails: { serviceId: string };
     Booking: { service: Service };
