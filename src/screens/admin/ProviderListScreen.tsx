@@ -226,7 +226,7 @@ const ProviderListScreen: React.FC = () => {
 
     return (
         <SafeAreaView className="flex-1 bg-gray-50" edges={['top']}>
-            {/* Header */}
+            {/* Fixed Header Section */}
             <View className="bg-primary pt-4 pb-6 px-6">
                 <View className="flex-row items-center justify-between mb-4">
                     <View className="flex-row items-center">
@@ -253,8 +253,8 @@ const ProviderListScreen: React.FC = () => {
                 </View>
             </View>
 
-            {/* Providers List */}
-            <View className="flex-1 px-6 -mt-4">
+            {/* Scrollable Providers List */}
+            <View className="flex-1 px-6">
                 {filteredProviders.length === 0 ? (
                     <EmptyState
                         icon="people-outline"

@@ -184,14 +184,12 @@ const UserListScreen: React.FC = () => {
     const FilterButton = ({ filter, label }: { filter: FilterTab; label: string }) => (
         <TouchableOpacity
             onPress={() => handleFilterChange(filter)}
-            className={`px-4 py-2 rounded-full mr-2 ${
-                activeFilter === filter ? 'bg-white' : 'bg-white/20'
-            }`}
+            className={`px-4 py-2 rounded-full mr-2 ${activeFilter === filter ? 'bg-white' : 'bg-white/20'
+                }`}
         >
             <Text
-                className={`text-sm font-semibold ${
-                    activeFilter === filter ? 'text-primary' : 'text-white'
-                }`}
+                className={`text-sm font-semibold ${activeFilter === filter ? 'text-primary' : 'text-white'
+                    }`}
             >
                 {label}
             </Text>
@@ -206,7 +204,7 @@ const UserListScreen: React.FC = () => {
 
     return (
         <SafeAreaView className="flex-1 bg-gray-50" edges={['top']}>
-            {/* Header */}
+            {/* Fixed Header Section */}
             <View className="bg-primary pt-4 pb-6 px-6">
                 <View className="flex-row items-center justify-between mb-4">
                     <View className="flex-row items-center">
@@ -277,8 +275,8 @@ const UserListScreen: React.FC = () => {
                 </View>
             </View>
 
-            {/* Users List */}
-            <View className="flex-1 px-6 -mt-4">
+            {/* Scrollable Users List */}
+            <View className="flex-1 px-6">
                 {filteredUsers.length === 0 ? (
                     <EmptyState
                         icon="people-outline"

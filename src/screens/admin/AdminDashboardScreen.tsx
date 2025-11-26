@@ -86,8 +86,8 @@ const AdminDashboardScreen: React.FC = () => {
     );
 
     return (
-        <View className="flex-1" style={{ backgroundColor: '#F9FAFB' }}>
-            {/* Header */}
+        <View className="flex-1 bg-gray-50">
+            {/* Fixed Header Section */}
             <View className="bg-primary pt-12 pb-6 px-6">
                 <View className="flex-row items-center justify-between">
                     <View>
@@ -100,8 +100,9 @@ const AdminDashboardScreen: React.FC = () => {
                 </View>
             </View>
 
+            {/* Scrollable Content */}
             <ScrollView
-                className="flex-1 px-6 -mt-4"
+                className="flex-1 px-6"
                 showsVerticalScrollIndicator={false}
                 refreshControl={
                     <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />

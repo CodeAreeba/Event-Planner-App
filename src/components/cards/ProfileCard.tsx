@@ -21,7 +21,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
             onPress={onPress}
             activeOpacity={0.7}
             disabled={!onPress}
-            className="bg-white rounded-2xl shadow-md p-6"
+            className="bg-white rounded-2xl shadow-lg p-6"
         >
             <View className="items-center">
                 {/* Profile Image */}

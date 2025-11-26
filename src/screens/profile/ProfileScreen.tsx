@@ -19,8 +19,8 @@ type ProfileScreenNavigationProp = CompositeNavigationProp<
 const ProfileScreen: React.FC = () => {
     const navigation = useNavigation<ProfileScreenNavigationProp>();
     const { user, userProfile, loading } = useAuth();
-    console.log("user:",user)
-    console.log("userProfile:",userProfile)
+    console.log("user:", user)
+    console.log("userProfile:", userProfile)
     const handleLogout = () => {
         showConfirmDialog(
             'Logout',
@@ -39,67 +39,70 @@ const ProfileScreen: React.FC = () => {
     }
 
     return (
-        <ScrollView className="flex-1 bg-gray-50">
-            {/* Header */}
+        <View className="flex-1 bg-gray-50">
+            {/* Fixed Header Section */}
             <View className="bg-primary pt-12 pb-8 px-6">
                 <Text className="text-white text-2xl font-bold">Profile</Text>
             </View>
 
-            {/* Profile Card */}
-            <View className="px-6 -mt-4 mb-6">
-                <ProfileCard
-                    profile={userProfile}
-                    onEdit={() => navigation.navigate('EditProfile')}
-                    showEditButton={true}
-                />
-            </View>
+            {/* Scrollable Content */}
+            <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+                {/* Profile Card */}
+                <View className="px-6 mt-4 mb-6">
+                    <ProfileCard
+                        profile={userProfile}
+                        onEdit={() => navigation.navigate('EditProfile')}
+                        showEditButton={true}
+                    />
+                </View>
 
-            {/* Menu Options */}
-            <View className="px-6">
-                <View className="bg-white rounded-2xl shadow-sm overflow-hidden mb-6">
+                {/* Menu Options */}
+                <View className="px-6">
+                    <View className="bg-white rounded-2xl shadow-sm overflow-hidden mb-6">
 
 
-                    {/* View Services for Regular Users */}
-                    {userProfile.role !== 'admin' && (
+                        {/* View Services for Regular Users */}
+                        {userProfile.role !== 'admin' && (
+                            <TouchableOpacity
+                                onPress={() => navigation.navigate('UserServices')}
+                                className="flex-row items-center p-4 border-b border-gray-100"
+                            >
+                                <View className="bg-green-50 p-2 rounded-lg mr-4">
+                                    <Ionicons name="briefcase-outline" size={24} color="#10B981" />
+                                </View>
+                                <View className="flex-1">
+                                    <Text className="text-gray-900 text-base font-semibold">
+                                        View Services
+                                    </Text>
+                                    <Text className="text-gray-500 text-sm">
+                                        Browse available services
+                                    </Text>
+                                </View>
+                                <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+                            </TouchableOpacity>
+                        )}
+
+
+
                         <TouchableOpacity
-                            onPress={() => navigation.navigate('UserServices')}
-                            className="flex-row items-center p-4 border-b border-gray-100"
+                            onPress={handleLogout}
+                            className="flex-row items-center p-4"
                         >
-                            <View className="bg-green-50 p-2 rounded-lg mr-4">
-                                <Ionicons name="briefcase-outline" size={24} color="#10B981" />
+                            <View className="bg-red-50 p-2 rounded-lg mr-4">
+                                <Ionicons name="log-out" size={24} color="#EF4444" />
                             </View>
                             <View className="flex-1">
-                                <Text className="text-gray-900 text-base font-semibold">
-                                    View Services
-                                </Text>
+                                <Text className="text-error text-base font-semibold">Logout</Text>
                                 <Text className="text-gray-500 text-sm">
-                                    Browse available services
+                                    Sign out of your account
                                 </Text>
                             </View>
                             <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
                         </TouchableOpacity>
-                    )}
-
-
-
-                    <TouchableOpacity
-                        onPress={handleLogout}
-                        className="flex-row items-center p-4"
-                    >
-                        <View className="bg-red-50 p-2 rounded-lg mr-4">
-                            <Ionicons name="log-out" size={24} color="#EF4444" />
-                        </View>
-                        <View className="flex-1">
-                            <Text className="text-error text-base font-semibold">Logout</Text>
-                            <Text className="text-gray-500 text-sm">
-                                Sign out of your account
-                            </Text>
-                        </View>
-                        <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
-                    </TouchableOpacity>
+                    </View>
                 </View>
-            </View>
-        </ScrollView>
+            </ScrollView>
+        </View>
     );
 };
 

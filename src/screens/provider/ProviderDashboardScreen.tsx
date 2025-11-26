@@ -1,13 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import ServiceCard from '../../components/cards/ServiceCard';
 import Loader from '../../components/ui/Loader';
 import { useAuth } from '../../context/AuthContext';
-import { getBookings } from '../../firebase/bookings';
+import { getBookings, updatePastBookingsStatus } from '../../firebase/bookings';
 import { getAllServices } from '../../firebase/services';
 import { AppStackNavigationProp } from '../../types/navigation';
 import { Service } from '../../types/service';
@@ -43,7 +41,7 @@ const ProviderDashboardScreen: React.FC = () => {
         try {
             // 0. Auto-update past bookings to 'completed' status
             try {
-                await updatePastBookingsStatus({ providerId: user.uid });
+                await updatePastBookingsStatus();
             } catch (updateError) {
                 // Silently fail if permissions don't allow
                 console.log('Could not auto-update past bookings');
@@ -179,7 +177,7 @@ const ProviderDashboardScreen: React.FC = () => {
 
         // Update past bookings status before reloading
         try {
-            await updatePastBookingsStatus({ providerId: user?.uid });
+            await updatePastBookingsStatus();
         } catch (error) {
             console.log('Could not auto-update past bookings');
         }
@@ -193,40 +191,32 @@ const ProviderDashboardScreen: React.FC = () => {
     }
 
     return (
-        <View className="flex-1 bg-gray-50">
+        <View className="flex-1" style={{ backgroundColor: '#F9FAFB' }}>
+            {/* Header */}
+            <View className="bg-primary pt-12 pb-6 px-6">
+                <View className="flex-row items-center justify-between mb-4">
+                    <View>
+                        <Text className="text-white text-2xl font-bold">Welcome!</Text>
+                        <Text className="text-white/80 text-sm mt-1">Hi, {userProfile?.name}</Text>
+                    </View>
+                    <View className="bg-white/30 px-5 py-2.5 rounded-full" style={styles.glassmorphism}>
+                        <Text className="text-white text-xs font-bold uppercase tracking-wider">Provider</Text>
+                    </View>
+                </View>
+                <Text className="text-white/95 text-base font-medium">
+                    Manage your services and track your bookings
+                </Text>
+            </View>
+
             <ScrollView
+                className="flex-1 mt-4"
                 showsVerticalScrollIndicator={false}
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-                contentContainerStyle={{ flexGrow: 1, paddingBottom: 24 }}
             >
-                {/* Header with Gradient Background */}
-                <LinearGradient
-                    colors={['#7C3AED', '#3B82F6']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={{ paddingTop: 0 }}
-                >
-                    <SafeAreaView edges={['top']}>
-                        <View className="px-6 pt-4 pb-8">
-                            <View className="flex-row justify-between items-center mb-4">
-                                <View className="flex-1">
-                                    <Text className="text-white/90 text-sm font-semibold">Welcome back,</Text>
-                                    <Text className="text-white text-3xl font-bold mt-1">{userProfile?.name}</Text>
-                                </View>
-                                <View className="bg-white/30 px-5 py-2.5 rounded-full" style={styles.glassmorphism}>
-                                    <Text className="text-white text-xs font-bold uppercase tracking-wider">Provider</Text>
-                                </View>
-                            </View>
-                            <Text className="text-white/95 text-base font-medium">
-                                Manage your services and track your bookings
-                            </Text>
-                        </View>
-                    </SafeAreaView>
-                </LinearGradient>
 
 
                 {/* Stats Grid with Glassmorphism */}
-                <View className="px-6 -mt-6 mb-6">
+                <View className="px-6  mb-6">
                     {/* First Row - Service Status Breakdown */}
                     <View className="flex-row gap-3 mb-3">
                         {/* Pending Approval */}
