@@ -48,16 +48,25 @@ export const signup = async (
     name: string
 ): Promise<{ success: boolean; user?: User; error?: string }> => {
     try {
+        console.log('🔐 Creating user account...');
         const userCredential: UserCredential = await createUserWithEmailAndPassword(
             auth,
             email,
             password
         );
         const user = userCredential.user;
+        const userId = user.uid;
+        console.log('✅ User account created:', userId);
 
-        // Create user profile in Firestore with default 'user' role
+        // Logout user IMMEDIATELY to prevent brief authenticated state
+        console.log('🚪 Logging out user immediately...');
+        await signOut(auth);
+        console.log('✅ User logged out');
+
+        // Create user profile in Firestore AFTER logout
+        // This works because Firestore rules allow users to create their own profile
         const userProfile: UserProfile = {
-            uid: user.uid,
+            uid: userId,
             email: user.email || email,
             name,
             role: 'user', // Default role for new signups
@@ -65,14 +74,22 @@ export const signup = async (
             updatedAt: new Date(),
         };
 
-        await setDoc(doc(db, 'users', user.uid), userProfile);
-
-        // Logout user immediately so they must login manually
-        await signOut(auth);
+        try {
+            console.log('💾 Creating user profile in Firestore...');
+            await setDoc(doc(db, 'users', userId), userProfile);
+            console.log('✅ User profile created in Firestore');
+        } catch (firestoreError: any) {
+            console.error('❌ Firestore profile creation failed:', firestoreError);
+            console.error('   Error code:', firestoreError.code);
+            console.error('   Error message:', firestoreError.message);
+            // Profile creation failed, but user account exists
+            // They can still login, and AuthContext will create the profile
+        }
 
         return { success: true, user };
     } catch (error: any) {
-        console.error('Signup error:', error);
+        console.error('❌ Signup error:', error);
+        console.error('   Error code:', error.code);
         const errorMessage = getAuthErrorMessage(error.code);
         return { success: false, error: errorMessage };
     }
@@ -143,16 +160,21 @@ export const getUserProfile = async (
     uid: string
 ): Promise<{ success: boolean; profile?: UserProfile; error?: string }> => {
     try {
+        console.log('📖 Fetching user profile for uid:', uid);
         const docRef = doc(db, 'users', uid);
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
+            console.log('✅ User profile found:', docSnap.data());
             return { success: true, profile: docSnap.data() as UserProfile };
         } else {
+            console.warn('⚠️ User profile not found in Firestore for uid:', uid);
             return { success: false, error: 'User profile not found' };
         }
     } catch (error: any) {
-        console.error('Get user profile error:', error);
+        console.error('❌ Get user profile error:', error);
+        console.error('   Error code:', error.code);
+        console.error('   Error message:', error.message);
         return { success: false, error: error.message };
     }
 };

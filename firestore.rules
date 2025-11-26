@@ -15,24 +15,34 @@ service cloud.firestore {
     }
     
     // Helper function to check if user is active (not blocked or deleted)
-    function isActiveUser() {
-      return request.auth != null &&
-             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('status', 'active') == 'active' &&
-             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('isDeleted', false) != true;
+    // Only use this for OTHER users' documents, not for reading your own profile
+    function isActiveUser(uid) {
+      return exists(/databases/$(database)/documents/users/$(uid)) &&
+             get(/databases/$(database)/documents/users/$(uid)).data.get('status', 'active') == 'active' &&
+             get(/databases/$(database)/documents/users/$(uid)).data.get('isDeleted', false) != true;
     }
     
     // Users collection
     match /users/{userId} {
-      // Admins can read all users (including deleted and blocked)
-      // Active users can read their own profile and other users' profiles
-      allow read: if isAdmin() || (isActiveUser() && isAuthenticated());
+      // Users can ALWAYS read their own profile (no isActiveUser check to avoid circular dependency)
+      // Admins can read all users
+      // Authenticated users can read other users' basic profiles
+      allow read: if isAuthenticated() && 
+                     (request.auth.uid == userId || isAdmin());
+      
+      // Users can CREATE their own profile during signup (even if not authenticated yet)
+      // This allows signup to work smoothly without brief login/logout
+      allow create: if (isAuthenticated() && request.auth.uid == userId) ||
+                       (!exists(/databases/$(database)/documents/users/$(userId)) &&
+                        request.resource.data.uid == userId &&
+                        request.resource.data.role == 'user');
       
       // Admins can create/update/delete any user
       allow write: if isAdmin();
       
       // Users can update their own profile (except protected fields)
-      allow update: if isActiveUser() && 
+      // No isActiveUser check here to avoid issues
+      allow update: if isAuthenticated() && 
                        request.auth.uid == userId &&
                        !request.resource.data.diff(resource.data).affectedKeys()
                          .hasAny(['role', 'status', 'isDeleted', 'deletedAt', 'uid', 'email']);
@@ -47,48 +57,55 @@ service cloud.firestore {
     
     // Services collection
     match /services/{serviceId} {
-      // Anyone can read active services (but blocked/deleted users are blocked at app level)
+      // Anyone can read active services (public access for browsing)
       allow read: if true;
       
-      // Admins and providers can create services
-      allow create: if isAdmin() || (isActiveUser() && isProvider());
+      // Admins and active providers can create services
+      allow create: if isAdmin() || 
+                       (isAuthenticated() && 
+                        isActiveUser(request.auth.uid) && 
+                        isProvider());
       
       // Admins can update/delete any service
-      // Providers can only update/delete their own services
+      // Active providers can only update/delete their own services
       allow update, delete: if isAdmin() || 
-                               (isActiveUser() && isProvider() && 
+                               (isAuthenticated() && 
+                                isActiveUser(request.auth.uid) && 
+                                isProvider() && 
                                 request.auth.uid == resource.data.createdBy);
     }
     
     // Bookings collection
     match /bookings/{bookingId} {
+      // For reading a single document (get operation)
       // Admins can read all bookings
-      // Active users can read their own bookings or bookings for their services
-      allow read: if isAdmin() || 
-                     (isActiveUser() && 
-                      (request.auth.uid == resource.data.userId || 
-                       request.auth.uid == resource.data.providerId));
+      // Users can read bookings where they are the user or provider
+      allow get: if isAdmin() || 
+                    (isAuthenticated() && 
+                     (request.auth.uid == resource.data.userId || 
+                      request.auth.uid == resource.data.providerId));
       
-      // Allow list/query operations when filtering by userId or providerId
-      allow list: if isAdmin() || 
-                     (isActiveUser() && 
-                      (request.query.limit <= 100 && 
-                       (request.auth.uid in resource.data.values().toSet())));
+      // For listing/querying documents (list operation)
+      // Allow any authenticated user to query bookings
+      // The app is responsible for filtering by userId or providerId
+      allow list: if isAuthenticated();
       
-      // Only active users can create bookings
-      allow create: if isActiveUser();
+      // Only authenticated users can create bookings for themselves
+      allow create: if isAuthenticated() && 
+                       request.resource.data.userId == request.auth.uid;
       
       // Admins can update all bookings
-      // Active users can update their own bookings or bookings for their services
+      // Users can update their own bookings or bookings for their services
       allow update: if isAdmin() ||
-                       (isActiveUser() && 
+                       (isAuthenticated() && 
                         (request.auth.uid == resource.data.userId || 
                          request.auth.uid == resource.data.providerId));
       
       // Admins can delete all bookings
-      // Active users can delete their own bookings
+      // Users can delete their own bookings
       allow delete: if isAdmin() ||
-                       (isActiveUser() && request.auth.uid == resource.data.userId);
+                       (isAuthenticated() && 
+                        request.auth.uid == resource.data.userId);
     }
   }
 }

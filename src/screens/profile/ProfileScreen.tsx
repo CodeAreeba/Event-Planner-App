@@ -19,7 +19,8 @@ type ProfileScreenNavigationProp = CompositeNavigationProp<
 const ProfileScreen: React.FC = () => {
     const navigation = useNavigation<ProfileScreenNavigationProp>();
     const { user, userProfile, loading } = useAuth();
-
+    console.log("user:",user)
+    console.log("userProfile:",userProfile)
     const handleLogout = () => {
         showConfirmDialog(
             'Logout',

@@ -367,14 +367,18 @@ const HomeScreen: React.FC = () => {
             <TouchableOpacity
               key={category.id}
               onPress={() => navigation.navigate("Search")}
-              className="bg-white rounded-2xl p-4 shadow-sm items-center"
+              className="bg-white rounded-2xl p-4 shadow-sm items-center mr-2.5"
               style={{ width: 110 }}
             >
               <View
                 className="w-14 h-14 rounded-full items-center justify-center mb-2"
                 style={{ backgroundColor: category.color + "20" }}
               >
-                <Text className="text-3xl">{category.icon}</Text>
+                <Ionicons
+                  name={category.icon as any}
+                  size={28}
+                  color={category.color}
+                />
               </View>
               <Text className="text-gray-900 text-xs font-semibold text-center">
                 {category.name}
@@ -385,7 +389,7 @@ const HomeScreen: React.FC = () => {
       </View>
 
       {/* Featured Services */}
-      <View className="px-6 mb-6">
+      <View className="px-6 mb-24">
         <View className="flex-row justify-between items-center mb-4">
           <Text className="text-gray-900 text-lg font-bold">
             Featured Services
