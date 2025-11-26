@@ -24,7 +24,7 @@ const PrimaryButton: React.FC<PrimaryButtonProps> = ({
         <TouchableOpacity
             onPress={onPress}
             disabled={isDisabled}
-            className={`bg-primary rounded-xl py-4 px-6 flex-row items-center justify-center ${isDisabled ? 'opacity-50' : 'active:opacity-80'
+            className={`bg-primary rounded-full py-3 px-6 flex-row items-center justify-center ${isDisabled ? 'opacity-50' : 'active:opacity-80'
                 } ${className}`}
             activeOpacity={0.8}
         >

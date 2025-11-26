@@ -41,7 +41,7 @@ const EditProfileScreen: React.FC = () => {
             setName(userProfile.name);
             setPhone(userProfile.phone || '');
             setAddress(userProfile.address || '');
-            setImageUri(userProfile.photoURL || null);
+            setImageUri(userProfile.profileImage || null);
         }
     }, [userProfile]);
 
@@ -91,16 +91,16 @@ const EditProfileScreen: React.FC = () => {
         if (!validateForm() || !userProfile) return;
 
         setLoading(true);
-        let photoURL = userProfile.photoURL;
+        let profileImage = userProfile.profileImage;
 
         // Upload image if changed and it's a local URI
-        if (imageUri && imageUri !== userProfile.photoURL && !imageUri.startsWith('http')) {
+        if (imageUri && imageUri !== userProfile.profileImage && !imageUri.startsWith('http')) {
             setUploading(true);
             const path = generateImagePath(userProfile.uid, 'profiles');
             const { success, url, error } = await uploadImage(imageUri, path);
 
             if (success && url) {
-                photoURL = url;
+                profileImage = url;
             } else {
                 Alert.alert('Upload Failed', error || 'Failed to upload profile image');
                 setLoading(false);
@@ -114,7 +114,7 @@ const EditProfileScreen: React.FC = () => {
             name,
             phone: phone || undefined,
             address: address || undefined,
-            photoURL: photoURL || undefined,
+            profileImage: profileImage || undefined,
         };
 
         const { success, error } = await updateUser(userProfile.uid, updates);
@@ -206,7 +206,7 @@ const EditProfileScreen: React.FC = () => {
                 </View>
 
                 {/* Action Buttons */}
-                <View className="py-8 gap-y-3">
+                <View className="py-3 gap-y-3">
                     <PrimaryButton
                         title={uploading ? "Uploading Image..." : "Save Changes"}
                         onPress={handleSubmit}

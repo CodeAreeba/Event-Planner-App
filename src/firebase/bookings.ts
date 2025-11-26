@@ -42,8 +42,14 @@ export const createBooking = async (
     try {
         console.log('\n💾 Saving booking to Firestore...');
 
+        // Convert date to Firestore Timestamp if it's a Date object
+        const dateToSave = bookingData.date instanceof Date 
+            ? Timestamp.fromDate(bookingData.date)
+            : bookingData.date;
+
         const bookingWithDefaults = {
             ...bookingData,
+            date: dateToSave,
             status: 'pending' as BookingStatus,
             createdAt: Timestamp.now(),
             updatedAt: Timestamp.now(),
@@ -53,6 +59,7 @@ export const createBooking = async (
         console.log('  userId:', bookingWithDefaults.userId);
         console.log('  providerId:', bookingWithDefaults.providerId);
         console.log('  serviceId:', bookingWithDefaults.serviceId);
+        console.log('  date:', bookingData.date);
         console.log('  status:', bookingWithDefaults.status);
         console.log('  price:', bookingWithDefaults.price);
 

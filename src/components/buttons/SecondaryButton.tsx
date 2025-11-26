@@ -24,7 +24,7 @@ const SecondaryButton: React.FC<SecondaryButtonProps> = ({
         <TouchableOpacity
             onPress={onPress}
             disabled={isDisabled}
-            className={`bg-white border-2 border-primary rounded-xl py-4 px-6 flex-row items-center justify-center ${isDisabled ? 'opacity-50' : 'active:opacity-80'
+            className={`bg-white border-2 border-primary rounded-full py-3 px-6 flex-row items-center justify-center ${isDisabled ? 'opacity-50' : 'active:opacity-80'
                 } ${className}`}
             activeOpacity={0.8}
         >

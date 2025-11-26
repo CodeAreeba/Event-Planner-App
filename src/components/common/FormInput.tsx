@@ -17,13 +17,13 @@ const FormInput: React.FC<FormInputProps> = ({
     ...props
 }) => {
     return (
-        <View className="mb-4">
+        <View className="mb-1">
             <Text className="text-gray-700 text-sm font-semibold mb-2">
                 {label}
                 {required && <Text className="text-red-500"> *</Text>}
             </Text>
             <View
-                className={`flex-row items-center bg-white rounded-xl px-4 py-3 border ${error ? 'border-red-300' : 'border-gray-200'
+                className={`flex-row items-center bg-white rounded-xl px-4 py-1 border ${error ? 'border-red-300' : 'border-gray-200'
                     }`}
             >
                 {icon && (
