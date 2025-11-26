@@ -3,6 +3,8 @@
  */
 
 import { NavigationProp, RouteProp } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+
 import { Service } from './service';
 
 // Auth Stack Param List
@@ -50,7 +52,7 @@ export type RootStackParamList = {
 };
 
 // Navigation Props
-export type AuthStackNavigationProp = NavigationProp<AuthStackParamList>;
+export type AuthStackNavigationProp = NativeStackNavigationProp<AuthStackParamList>;
 export type TabNavigationProp = NavigationProp<TabParamList>;
 export type AppStackNavigationProp = NavigationProp<AppStackParamList>;
 
