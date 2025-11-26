@@ -191,10 +191,11 @@ export const formatRelativeTime = (date: any): string => {
  * Format booking status for display
  */
 export const formatBookingStatus = (
-    status: 'pending' | 'accepted' | 'rejected' | 'completed' | 'cancelled'
+    status: 'pending' | 'confirmed' | 'accepted' | 'rejected' | 'completed' | 'cancelled'
 ): string => {
     const statusMap = {
         pending: 'Pending',
+        confirmed: 'Confirmed',
         accepted: 'Accepted',
         rejected: 'Rejected',
         completed: 'Completed',

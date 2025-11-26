@@ -32,6 +32,7 @@ const BookingCard: React.FC<BookingCardProps> = ({
 }) => {
   const getStatusColor = (status: string) => {
     switch (status) {
+      case "confirmed":
       case "accepted":
         return "bg-green-100 text-green-800";
       case "pending":
