@@ -19,7 +19,7 @@ import {
   Booking,
   cancelBooking,
   subscribeToBookings,
-  updatePastBookingsStatus,
+  updatePastBookingsForUser,
 } from "../../firebase/bookings";
 import { AppStackNavigationProp } from "../../types/navigation";
 
@@ -75,11 +75,13 @@ const BookingsScreen: React.FC = () => {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    // Try to update past bookings status (may fail due to permissions)
-    try {
-      await updatePastBookingsStatus();
-    } catch (error) {
-      console.log("Could not auto-update past bookings (admin only)");
+    // Update past bookings for current user
+    if (user) {
+      try {
+        await updatePastBookingsForUser(user.uid);
+      } catch (error) {
+        console.log("Could not auto-update past bookings");
+      }
     }
     // Real-time listener will automatically update the list
   };

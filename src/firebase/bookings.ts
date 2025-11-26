@@ -454,7 +454,58 @@ export const subscribeToBookings = (
 };
 
 /**
- * Update booking status based on date
+ * Update booking status based on date for a specific user
+ * Automatically sets past bookings to 'completed' for bookings where the user is involved
+ * @param userId - The ID of the current user (can be customer or provider)
+ */
+export const updatePastBookingsForUser = async (userId: string): Promise<{ success: boolean; updated: number }> => {
+    try {
+        const now = new Date();
+        
+        // Get bookings where user is either the customer or provider
+        const userBookingsQuery = query(
+            collection(db, 'bookings'),
+            where('status', 'in', ['pending', 'accepted'])
+        );
+
+        const querySnapshot = await getDocs(userBookingsQuery);
+        let updated = 0;
+
+        const updatePromises = querySnapshot.docs
+            .filter(docSnapshot => {
+                const data = docSnapshot.data();
+                // Only process bookings where current user is involved
+                return data.userId === userId || data.providerId === userId;
+            })
+            .map(async (docSnapshot) => {
+                const data = docSnapshot.data();
+                const bookingDate = data.date?.toDate ? data.date.toDate() : new Date(data.date);
+
+                if (bookingDate < now) {
+                    try {
+                        await updateDoc(doc(db, 'bookings', docSnapshot.id), {
+                            status: 'completed',
+                            updatedAt: Timestamp.now(),
+                        });
+                        updated++;
+                    } catch (updateError) {
+                        // Skip bookings that can't be updated due to permissions
+                        console.log('Could not update booking:', docSnapshot.id);
+                    }
+                }
+            });
+
+        await Promise.all(updatePromises);
+        return { success: true, updated };
+    } catch (error: any) {
+        console.error('Update past bookings error:', error);
+        return { success: false, updated: 0 };
+    }
+};
+
+/**
+ * @deprecated Use updatePastBookingsForUser instead
+ * Update booking status based on date (Admin only - requires permission to update all bookings)
  * Automatically sets past bookings to 'completed'
  */
 export const updatePastBookingsStatus = async (): Promise<{ success: boolean; updated: number }> => {
