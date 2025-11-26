@@ -1,0 +1,12 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ⚠️ WARNING: TEMPORARY TESTING RULES - REPLACE BEFORE PRODUCTION ⚠️
+    // These rules allow all authenticated users to read/write everything
+    // Use only for development/testing
+    
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}

@@ -455,7 +455,9 @@ export const subscribeToBookings = (
 
 /**
  * Update booking status based on date for a specific user
- * Automatically sets past bookings to 'completed' for bookings where the user is involved
+ * Automatically sets past bookings:
+ * - 'pending' bookings (not confirmed) → 'cancelled'
+ * - 'confirmed' bookings → 'completed'
  * @param userId - The ID of the current user (can be customer or provider)
  */
 export const updatePastBookingsForUser = async (userId: string): Promise<{ success: boolean; updated: number }> => {
@@ -465,7 +467,7 @@ export const updatePastBookingsForUser = async (userId: string): Promise<{ succe
         // Get bookings where user is either the customer or provider
         const userBookingsQuery = query(
             collection(db, 'bookings'),
-            where('status', 'in', ['pending', 'accepted'])
+            where('status', 'in', ['pending', 'confirmed'])
         );
 
         const querySnapshot = await getDocs(userBookingsQuery);
@@ -483,8 +485,12 @@ export const updatePastBookingsForUser = async (userId: string): Promise<{ succe
 
                 if (bookingDate < now) {
                     try {
+                        // Pending bookings (never confirmed) become cancelled
+                        // Confirmed bookings become completed
+                        const newStatus = data.status === 'pending' ? 'cancelled' : 'completed';
+                        
                         await updateDoc(doc(db, 'bookings', docSnapshot.id), {
-                            status: 'completed',
+                            status: newStatus,
                             updatedAt: Timestamp.now(),
                         });
                         updated++;
