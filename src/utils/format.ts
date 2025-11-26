@@ -188,18 +188,18 @@ export const formatRelativeTime = (date: any): string => {
 };
 
 /**
- * Format booking status to display text
+ * Format booking status for display
  */
 export const formatBookingStatus = (
-    status: 'pending' | 'confirmed' | 'completed' | 'cancelled'
+    status: 'pending' | 'accepted' | 'rejected' | 'completed' | 'cancelled'
 ): string => {
-    const statusMap: Record<string, string> = {
+    const statusMap = {
         pending: 'Pending',
-        confirmed: 'Confirmed',
+        accepted: 'Accepted',
+        rejected: 'Rejected',
         completed: 'Completed',
         cancelled: 'Cancelled',
     };
-
     return statusMap[status] || status;
 };
 

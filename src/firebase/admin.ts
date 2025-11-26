@@ -71,11 +71,13 @@ export const getAllUsers = async (
 
 /**
  * Get users by role
+ * Includes fallback for missing Firestore index
  */
 export const getUsersByRole = async (
     role: UserRole
 ): Promise<{ success: boolean; users?: UserProfile[]; error?: string }> => {
     try {
+        // Try optimized query with index
         const q = query(
             collection(db, 'users'),
             where('role', '==', role),
@@ -91,6 +93,35 @@ export const getUsersByRole = async (
 
         return { success: true, users };
     } catch (error: any) {
+        // If index is missing, use fallback query without orderBy
+        if (error.code === 'failed-precondition' || error.message?.includes('index')) {
+            console.log('Index not available for getUsersByRole, using fallback query...');
+            try {
+                const fallbackQuery = query(
+                    collection(db, 'users'),
+                    where('role', '==', role)
+                );
+                const querySnapshot = await getDocs(fallbackQuery);
+                let users: UserProfile[] = [];
+
+                querySnapshot.forEach((doc) => {
+                    users.push(doc.data() as UserProfile);
+                });
+
+                // Sort client-side
+                users.sort((a, b) => {
+                    const dateA = a.createdAt instanceof Date ? a.createdAt : new Date(a.createdAt);
+                    const dateB = b.createdAt instanceof Date ? b.createdAt : new Date(b.createdAt);
+                    return dateB.getTime() - dateA.getTime();
+                });
+
+                return { success: true, users };
+            } catch (fallbackError: any) {
+                console.error('Fallback query error:', fallbackError);
+                return { success: false, error: fallbackError.message };
+            }
+        }
+
         console.error('Get users by role error:', error);
         return { success: false, error: error.message };
     }

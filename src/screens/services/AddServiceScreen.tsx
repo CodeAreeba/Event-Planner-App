@@ -26,7 +26,20 @@ const AddServiceScreen: React.FC = () => {
     }, [canAddService]);
 
     const handleSubmit = async (data: ServiceFormData) => {
-        const { success, error } = await createService(data, user?.uid);
+        if (!user || !userProfile) {
+            Alert.alert('Error', 'User information not available');
+            return;
+        }
+
+        const serviceData = {
+            ...data,
+            providerId: user.uid,
+            providerName: userProfile.name,
+            status: 'pending' as const,
+            isActive: true,
+        };
+
+        const { success, error } = await createService(serviceData, user.uid, userProfile.name);
 
         if (success) {
             Alert.alert('Success', 'Service created successfully', [

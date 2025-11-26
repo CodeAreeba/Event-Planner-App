@@ -163,18 +163,25 @@ const AdminDashboardScreen: React.FC = () => {
                         onPress={() => navigation.navigate('UserList')}
                     />
                     <QuickActionCard
+                        icon="briefcase-outline"
+                        title="Manage Providers"
+                        subtitle="View and manage service providers"
+                        color="#8B5CF6"
+                        onPress={() => navigation.navigate('ProviderList')}
+                    />
+                    <QuickActionCard
                         icon="checkmark-circle-outline"
                         title="Approve Services"
                         subtitle={`${analytics?.pendingServices || 0} pending approval`}
                         color="#10B981"
-                        onPress={() => {/* Navigate to Service Approval */ }}
+                        onPress={() => navigation.navigate('ServiceApproval')}
                     />
                     <QuickActionCard
                         icon="calendar-outline"
                         title="View All Bookings"
                         subtitle="Manage platform bookings"
                         color="#F59E0B"
-                        onPress={() => {/* Navigate to Booking Management */ }}
+                        onPress={() => navigation.navigate('Bookings')}
                     />
                     <QuickActionCard
                         icon="stats-chart-outline"

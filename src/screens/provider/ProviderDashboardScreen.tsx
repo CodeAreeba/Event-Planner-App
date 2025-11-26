@@ -176,14 +176,14 @@ const ProviderDashboardScreen: React.FC = () => {
     const onRefresh = async () => {
         console.log('🔄 Pull to refresh triggered');
         setRefreshing(true);
-        
+
         // Update past bookings status before reloading
         try {
             await updatePastBookingsStatus({ providerId: user?.uid });
         } catch (error) {
             console.log('Could not auto-update past bookings');
         }
-        
+
         await loadData();
         setRefreshing(false);
     };
@@ -227,28 +227,64 @@ const ProviderDashboardScreen: React.FC = () => {
 
                 {/* Stats Grid with Glassmorphism */}
                 <View className="px-6 -mt-6 mb-6">
-                    <View className="flex-row gap-3">
-                        {/* Total Services Card */}
+                    {/* First Row - Service Status Breakdown */}
+                    <View className="flex-row gap-3 mb-3">
+                        {/* Pending Approval */}
                         <TouchableOpacity
                             onPress={() => navigation.navigate('UserServices')}
                             style={styles.statCard}
                             className="flex-1"
                         >
-                            <View style={[styles.iconContainer, { backgroundColor: '#DBEAFE' }]}>
-                                <Ionicons name="briefcase" size={22} color="#3B82F6" />
+                            <View style={[styles.iconContainer, { backgroundColor: '#FEF3C7' }]}>
+                                <Ionicons name="time" size={22} color="#F59E0B" />
                             </View>
-                            <Text className="text-2xl font-bold text-gray-900 mt-2">{stats.totalServices}</Text>
-                            <Text className="text-gray-600 text-xs font-medium">Total Services</Text>
+                            <Text className="text-2xl font-bold text-gray-900 mt-2">
+                                {services.filter(s => s.status === 'pending').length}
+                            </Text>
+                            <Text className="text-gray-600 text-xs font-medium">Pending Approval</Text>
                         </TouchableOpacity>
 
+                        {/* Approved Services */}
+                        <TouchableOpacity
+                            onPress={() => navigation.navigate('UserServices')}
+                            style={styles.statCard}
+                            className="flex-1"
+                        >
+                            <View style={[styles.iconContainer, { backgroundColor: '#D1FAE5' }]}>
+                                <Ionicons name="checkmark-circle" size={22} color="#10B981" />
+                            </View>
+                            <Text className="text-2xl font-bold text-gray-900 mt-2">
+                                {services.filter(s => s.status === 'approved').length}
+                            </Text>
+                            <Text className="text-gray-600 text-xs font-medium">Approved</Text>
+                        </TouchableOpacity>
+
+                        {/* Rejected Services */}
+                        <TouchableOpacity
+                            onPress={() => navigation.navigate('UserServices')}
+                            style={styles.statCard}
+                            className="flex-1"
+                        >
+                            <View style={[styles.iconContainer, { backgroundColor: '#FEE2E2' }]}>
+                                <Ionicons name="close-circle" size={22} color="#EF4444" />
+                            </View>
+                            <Text className="text-2xl font-bold text-gray-900 mt-2">
+                                {services.filter(s => s.status === 'rejected').length}
+                            </Text>
+                            <Text className="text-gray-600 text-xs font-medium">Rejected</Text>
+                        </TouchableOpacity>
+                    </View>
+
+                    {/* Second Row - Bookings & Earnings */}
+                    <View className="flex-row gap-3">
                         {/* Pending Jobs Card */}
                         <TouchableOpacity
-                            onPress={() => navigation.navigate('Bookings')}
+                            onPress={() => navigation.navigate('ProviderBookings')}
                             style={styles.statCard}
                             className="flex-1"
                         >
                             <View style={[styles.iconContainer, { backgroundColor: '#FFEDD5' }]}>
-                                <Ionicons name="time" size={22} color="#F97316" />
+                                <Ionicons name="calendar" size={22} color="#F97316" />
                             </View>
                             <Text className="text-2xl font-bold text-gray-900 mt-2">{stats.pendingBookings}</Text>
                             <Text className="text-gray-600 text-xs font-medium">Pending Jobs</Text>
@@ -256,17 +292,17 @@ const ProviderDashboardScreen: React.FC = () => {
 
                         {/* Total Earnings Card */}
                         <TouchableOpacity
-                            onPress={() => navigation.navigate('Bookings')}
+                            onPress={() => navigation.navigate('ProviderBookings')}
                             style={styles.statCard}
                             className="flex-1"
                         >
-                            <View style={[styles.iconContainer, { backgroundColor: '#D1FAE5' }]}>
-                                <Ionicons name="cash" size={22} color="#10B981" />
+                            <View style={[styles.iconContainer, { backgroundColor: '#DBEAFE' }]}>
+                                <Ionicons name="cash" size={22} color="#3B82F6" />
                             </View>
                             <Text className="text-xl font-bold text-gray-900 mt-2">
                                 Rs. {stats.totalEarnings.toLocaleString()}
                             </Text>
-                            <Text className="text-gray-600 text-xs font-medium">Earnings</Text>
+                            <Text className="text-gray-600 text-xs font-medium">Total Earnings</Text>
                             <Text className="text-gray-500 text-[10px] mt-0.5">
                                 {stats.completedBookings} completed
                             </Text>

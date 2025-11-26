@@ -93,6 +93,7 @@ const EditServiceScreen: React.FC = () => {
                     description: service.description,
                     price: service.price,
                     duration: service.duration,
+                    category: service.category,
                 }}
                 onSubmit={handleSubmit}
                 submitButtonText="Update Service"

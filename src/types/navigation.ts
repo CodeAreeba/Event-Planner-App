@@ -3,7 +3,7 @@
  */
 
 import { NavigationProp, RouteProp } from '@react-navigation/native';
-import { Service } from '../firebase/services';
+import { Service } from './service';
 
 // Auth Stack Param List
 export type AuthStackParamList = {
@@ -37,6 +37,10 @@ export type AppStackParamList = {
     EditProfile: undefined;
     UserList: undefined;
     EditUser: { userId: string };
+    ProviderList: undefined;
+    ProviderDetails: { providerId: string };
+    ServiceApproval: undefined;
+    ProviderBookings: undefined;
 };
 
 // Root Stack Param List

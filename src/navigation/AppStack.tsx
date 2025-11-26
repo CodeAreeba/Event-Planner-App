@@ -3,6 +3,9 @@ import React from 'react';
 import { AppStackParamList } from '../types/navigation';
 
 // Import navigators and screens
+import ProviderDetailsScreen from '../screens/admin/ProviderDetailsScreen';
+import ProviderListScreen from '../screens/admin/ProviderListScreen';
+import ServiceApprovalScreen from '../screens/admin/ServiceApprovalScreen';
 import ServicesListScreen from '../screens/admin/ServicesListScreen';
 import EditUserScreen from '../screens/admin/Users/EditUserScreen';
 import UserListScreen from '../screens/admin/Users/UserListScreen';
@@ -11,6 +14,7 @@ import BookingScreen from '../screens/bookings/BookingScreen';
 import CreateBookingScreen from '../screens/bookings/CreateBookingScreen';
 import EditBookingScreen from '../screens/bookings/EditBookingScreen';
 import EditProfileScreen from '../screens/profile/EditProfileScreen';
+import ProviderBookingsScreen from '../screens/provider/ProviderBookingsScreen';
 import AddServiceScreen from '../screens/services/AddServiceScreen';
 import EditServiceScreen from '../screens/services/EditServiceScreen';
 import ServiceDetailsScreen from '../screens/services/ServiceDetailsScreen';
@@ -41,8 +45,8 @@ const AppStack: React.FC = () => {
             <Stack.Screen
                 name="AddService"
                 component={AddServiceScreen}
-                options={{ 
-                    headerShown: true, 
+                options={{
+                    headerShown: true,
                     title: 'Add Service',
                     contentStyle: { paddingTop: 16 }
                 }}
@@ -91,6 +95,26 @@ const AppStack: React.FC = () => {
                 name="EditUser"
                 component={EditUserScreen}
                 options={{ headerShown: true, title: 'Edit User' }}
+            />
+            <Stack.Screen
+                name="ProviderList"
+                component={ProviderListScreen}
+                options={{ headerShown: false }}
+            />
+            <Stack.Screen
+                name="ProviderDetails"
+                component={ProviderDetailsScreen}
+                options={{ headerShown: false }}
+            />
+            <Stack.Screen
+                name="ServiceApproval"
+                component={ServiceApprovalScreen}
+                options={{ headerShown: false }}
+            />
+            <Stack.Screen
+                name="ProviderBookings"
+                component={ProviderBookingsScreen}
+                options={{ headerShown: false }}
             />
         </Stack.Navigator>
     );

@@ -184,12 +184,14 @@ const UserListScreen: React.FC = () => {
     const FilterButton = ({ filter, label }: { filter: FilterTab; label: string }) => (
         <TouchableOpacity
             onPress={() => handleFilterChange(filter)}
-            className={`px-4 py-2 rounded-full mr-2 ${activeFilter === filter ? 'bg-primary' : 'bg-white'
-                }`}
+            className={`px-4 py-2 rounded-full mr-2 ${
+                activeFilter === filter ? 'bg-white' : 'bg-white/20'
+            }`}
         >
             <Text
-                className={`text-sm font-semibold ${activeFilter === filter ? 'text-white' : 'text-gray-600'
-                    }`}
+                className={`text-sm font-semibold ${
+                    activeFilter === filter ? 'text-primary' : 'text-white'
+                }`}
             >
                 {label}
             </Text>
@@ -220,6 +222,49 @@ const UserListScreen: React.FC = () => {
                         <Text className="text-white text-xs font-bold">
                             {activeUsersCount} Users
                         </Text>
+                    </View>
+                </View>
+
+                {/* Role Statistics */}
+                <View className="flex-row gap-2 mb-4">
+                    <View className="flex-1 bg-white/10 rounded-xl p-3">
+                        <View className="flex-row items-center justify-between">
+                            <View>
+                                <Text className="text-white/80 text-xs font-medium">Admins</Text>
+                                <Text className="text-white text-xl font-bold mt-1">
+                                    {users.filter(u => !u.isDeleted && u.role === 'admin').length}
+                                </Text>
+                            </View>
+                            <View className="bg-purple-500/30 p-2 rounded-lg">
+                                <Ionicons name="shield-checkmark" size={20} color="white" />
+                            </View>
+                        </View>
+                    </View>
+                    <View className="flex-1 bg-white/10 rounded-xl p-3">
+                        <View className="flex-row items-center justify-between">
+                            <View>
+                                <Text className="text-white/80 text-xs font-medium">Providers</Text>
+                                <Text className="text-white text-xl font-bold mt-1">
+                                    {users.filter(u => !u.isDeleted && u.role === 'provider').length}
+                                </Text>
+                            </View>
+                            <View className="bg-green-500/30 p-2 rounded-lg">
+                                <Ionicons name="briefcase" size={20} color="white" />
+                            </View>
+                        </View>
+                    </View>
+                    <View className="flex-1 bg-white/10 rounded-xl p-3">
+                        <View className="flex-row items-center justify-between">
+                            <View>
+                                <Text className="text-white/80 text-xs font-medium">Users</Text>
+                                <Text className="text-white text-xl font-bold mt-1">
+                                    {users.filter(u => !u.isDeleted && u.role === 'user').length}
+                                </Text>
+                            </View>
+                            <View className="bg-blue-500/30 p-2 rounded-lg">
+                                <Ionicons name="people" size={20} color="white" />
+                            </View>
+                        </View>
                     </View>
                 </View>
 

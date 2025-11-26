@@ -1,4 +1,4 @@
-export type BookingStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled';
+export type BookingStatus = 'pending' | 'accepted' | 'rejected' | 'completed' | 'cancelled';
 
 export interface Booking {
     id: string;
@@ -16,6 +16,12 @@ export interface Booking {
     status: BookingStatus;
     notes?: string;
     cancellationReason?: string;
+    // Accept/Reject tracking
+    acceptedAt?: Date;
+    acceptedBy?: string;
+    rejectedAt?: Date;
+    rejectedBy?: string;
+    rejectionReason?: string;
     createdAt: Date;
     updatedAt: Date;
 }

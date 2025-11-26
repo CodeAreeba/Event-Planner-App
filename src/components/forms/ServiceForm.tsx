@@ -1,5 +1,7 @@
+import { Picker } from '@react-native-picker/picker';
 import React, { useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { CATEGORIES } from '../../constants/categories';
 import { ServiceFormData } from '../../types/service';
 import PrimaryButton from '../buttons/PrimaryButton';
 
@@ -18,6 +20,7 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
     const [description, setDescription] = useState(initialValues?.description || '');
     const [price, setPrice] = useState(initialValues?.price?.toString() || '');
     const [duration, setDuration] = useState(initialValues?.duration?.toString() || '');
+    const [category, setCategory] = useState(initialValues?.category || '');
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -48,6 +51,10 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
             newErrors.duration = 'Duration must be greater than 0';
         }
 
+        if (!category) {
+            newErrors.category = 'Category is required';
+        }
+
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
@@ -64,6 +71,7 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
                 description: description.trim(),
                 price: Number(price),
                 duration: Number(duration),
+                category: category,
             };
 
             await onSubmit(formData);
@@ -152,6 +160,27 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
                 </View>
             </View>
 
+            {/* Category */}
+            <View style={styles.fieldContainer}>
+                <Text style={styles.label}>Category <Text style={styles.required}>*</Text></Text>
+                <View style={[styles.input, styles.pickerContainer, errors.category && styles.inputError]}>
+                    <Picker
+                        selectedValue={category}
+                        onValueChange={(itemValue) => setCategory(itemValue)}
+                        enabled={!loading}
+                        style={styles.picker}
+                    >
+                        <Picker.Item label="Select a category..." value="" />
+                        {CATEGORIES.map((cat) => (
+                            <Picker.Item key={cat.id} label={cat.name} value={cat.id} />
+                        ))}
+                    </Picker>
+                </View>
+                {errors.category ? (
+                    <Text style={styles.errorText}>{errors.category}</Text>
+                ) : null}
+            </View>
+
             {/* Submit Button */}
             <View style={styles.buttonContainer}>
                 <PrimaryButton
@@ -212,6 +241,15 @@ const styles = StyleSheet.create({
     },
     buttonContainer: {
         marginTop: 12,
+    },
+    pickerContainer: {
+        paddingHorizontal: 8,
+        paddingVertical: 0,
+        justifyContent: 'center',
+    },
+    picker: {
+        height: 50,
+        width: '100%',
     },
 });
 

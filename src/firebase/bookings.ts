@@ -120,6 +120,94 @@ export const cancelBooking = async (
 };
 
 /**
+ * Accept a booking (Provider action)
+ */
+export const acceptBooking = async (
+    bookingId: string,
+    providerId: string
+): Promise<{ success: boolean; error?: string }> => {
+    try {
+        // Get booking to verify provider owns it
+        const bookingRef = doc(db, 'bookings', bookingId);
+        const bookingSnap = await getDoc(bookingRef);
+
+        if (!bookingSnap.exists()) {
+            return { success: false, error: 'Booking not found' };
+        }
+
+        const booking = bookingSnap.data();
+
+        // Verify provider owns this booking
+        if (booking.providerId !== providerId) {
+            return { success: false, error: 'Unauthorized: You can only accept your own bookings' };
+        }
+
+        // Verify booking is in pending status
+        if (booking.status !== 'pending') {
+            return { success: false, error: `Cannot accept booking with status: ${booking.status}` };
+        }
+
+        // Update booking to accepted
+        await updateDoc(bookingRef, {
+            status: 'accepted',
+            acceptedAt: Timestamp.now(),
+            acceptedBy: providerId,
+            updatedAt: Timestamp.now(),
+        });
+
+        return { success: true };
+    } catch (error: any) {
+        console.error('Accept booking error:', error);
+        return { success: false, error: error.message };
+    }
+};
+
+/**
+ * Reject a booking (Provider action)
+ */
+export const rejectBooking = async (
+    bookingId: string,
+    providerId: string,
+    reason?: string
+): Promise<{ success: boolean; error?: string }> => {
+    try {
+        // Get booking to verify provider owns it
+        const bookingRef = doc(db, 'bookings', bookingId);
+        const bookingSnap = await getDoc(bookingRef);
+
+        if (!bookingSnap.exists()) {
+            return { success: false, error: 'Booking not found' };
+        }
+
+        const booking = bookingSnap.data();
+
+        // Verify provider owns this booking
+        if (booking.providerId !== providerId) {
+            return { success: false, error: 'Unauthorized: You can only reject your own bookings' };
+        }
+
+        // Verify booking is in pending status
+        if (booking.status !== 'pending') {
+            return { success: false, error: `Cannot reject booking with status: ${booking.status}` };
+        }
+
+        // Update booking to rejected
+        await updateDoc(bookingRef, {
+            status: 'rejected',
+            rejectedAt: Timestamp.now(),
+            rejectedBy: providerId,
+            rejectionReason: reason || 'No reason provided',
+            updatedAt: Timestamp.now(),
+        });
+
+        return { success: true };
+    } catch (error: any) {
+        console.error('Reject booking error:', error);
+        return { success: false, error: error.message };
+    }
+};
+
+/**
  * Delete a booking (admin only)
  */
 export const deleteBooking = async (
@@ -281,7 +369,6 @@ export const subscribeToBookings = (
                     console.log('Index not available for subscription, using fallback query...');
 
                     // Simpler query without orderBy
-                    let fallbackQuery = collection(db, 'bookings');
                     const constraints: any[] = [];
 
                     if (filters?.userId) {
@@ -295,38 +382,49 @@ export const subscribeToBookings = (
                     }
 
                     const fallbackQ = constraints.length > 0
-                        ? query(fallbackQuery, ...constraints)
-                        : fallbackQuery;
+                        ? query(collection(db, 'bookings'), ...constraints)
+                        : collection(db, 'bookings');
 
                     // Subscribe with fallback query
-                    return onSnapshot(
-                        fallbackQ,
-                        (querySnapshot) => {
-                            let bookings: Booking[] = querySnapshot.docs.map((doc) => {
-                                const data = doc.data();
-                                return {
-                                    id: doc.id,
-                                    ...data,
-                                    date: data.date?.toDate ? data.date.toDate() : new Date(data.date),
-                                    createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt),
-                                    updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : new Date(data.updatedAt),
-                                } as Booking;
-                            });
+                    try {
+                        return onSnapshot(
+                            fallbackQ,
+                            (querySnapshot) => {
+                                let bookings: Booking[] = querySnapshot.docs.map((doc) => {
+                                    const data = doc.data();
+                                    return {
+                                        id: doc.id,
+                                        ...data,
+                                        date: data.date?.toDate ? data.date.toDate() : new Date(data.date),
+                                        createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt),
+                                        updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : new Date(data.updatedAt),
+                                    } as Booking;
+                                });
 
-                            // Sort client-side since we can't use orderBy
-                            bookings.sort((a, b) => {
-                                const dateA = a.date instanceof Date ? a.date : new Date(a.date);
-                                const dateB = b.date instanceof Date ? b.date : new Date(b.date);
-                                return dateA.getTime() - dateB.getTime();
-                            });
+                                // Sort client-side since we can't use orderBy
+                                bookings.sort((a, b) => {
+                                    const dateA = a.date instanceof Date ? a.date : new Date(a.date);
+                                    const dateB = b.date instanceof Date ? b.date : new Date(b.date);
+                                    return dateA.getTime() - dateB.getTime();
+                                });
 
-                            callback(bookings);
-                        },
-                        (fallbackError) => {
-                            console.error('Fallback subscription error:', fallbackError);
-                            callback([]);
-                        }
-                    );
+                                callback(bookings);
+                            },
+                            (fallbackError) => {
+                                console.error('Fallback subscription error:', fallbackError);
+                                // Return empty array on permission errors instead of breaking
+                                callback([]);
+                            }
+                        );
+                    } catch (fallbackSetupError: any) {
+                        console.error('Error setting up fallback subscription:', fallbackSetupError);
+                        callback([]);
+                        return () => { }; // Return empty unsubscribe
+                    }
+                } else if (error.code === 'permission-denied' || error.message?.includes('permission')) {
+                    // Handle permission errors gracefully
+                    console.log('⚠️ Permission denied for bookings subscription. Returning empty results.');
+                    callback([]);
                 } else {
                     console.error('Subscription error:', error);
                     callback([]);
@@ -350,7 +448,7 @@ export const updatePastBookingsStatus = async (): Promise<{ success: boolean; up
         const now = new Date();
         const q = query(
             collection(db, 'bookings'),
-            where('status', 'in', ['pending', 'confirmed'])
+            where('status', 'in', ['pending', 'accepted'])
         );
 
         const querySnapshot = await getDocs(q);

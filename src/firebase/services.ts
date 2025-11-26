@@ -11,20 +11,27 @@ import {
     updateDoc,
     where,
 } from 'firebase/firestore';
+import { Service } from '../types/service';
 import { db } from './config';
 
-export interface Service {
-    id?: string;
-    title: string;  // Service title (using 'title' as per requirements)
-    name?: string;   // Alias for title (backward compatibility) - auto-generated from title
-    description: string;
-    price: number;
-    duration: number;
-    isActive: boolean;
-    createdAt: Date;
-    updatedAt: Date;
-    createdBy?: string;  // User ID of creator (for tracking)
-}
+/**
+ * Normalize service data for backward compatibility
+ * Provides default values for new required fields that may not exist in older services
+ */
+const normalizeService = (data: any, docId: string): Service => {
+    return {
+        id: docId,
+        ...data,
+        // Ensure new required fields have default values
+        category: data.category || 'event-planners',
+        providerId: data.providerId || data.createdBy || 'unknown',
+        providerName: data.providerName || 'Unknown Provider',
+        status: data.status || 'approved', // Assume old services are approved
+        images: data.images || [],
+        createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt),
+        updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : new Date(data.updatedAt),
+    } as Service;
+};
 
 /**
  * Get all services (Admin only)
@@ -65,15 +72,9 @@ export const getActiveServices = async (): Promise<{ success: boolean; services?
         );
         const querySnapshot = await getDocs(q);
 
-        const services: Service[] = querySnapshot.docs.map((doc) => {
-            const data = doc.data();
-            return {
-                id: doc.id,
-                ...data,
-                createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt),
-                updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : new Date(data.updatedAt),
-            } as Service;
-        });
+        const services: Service[] = querySnapshot.docs.map((doc) =>
+            normalizeService(doc.data(), doc.id)
+        );
 
         return { success: true, services };
     } catch (error: any) {
@@ -87,15 +88,9 @@ export const getActiveServices = async (): Promise<{ success: boolean; services?
                 );
                 const querySnapshot = await getDocs(fallbackQuery);
 
-                let services: Service[] = querySnapshot.docs.map((doc) => {
-                    const data = doc.data();
-                    return {
-                        id: doc.id,
-                        ...data,
-                        createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt),
-                        updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : new Date(data.updatedAt),
-                    } as Service;
-                });
+                let services: Service[] = querySnapshot.docs.map((doc) =>
+                    normalizeService(doc.data(), doc.id)
+                );
 
                 // Sort client-side
                 services.sort((a, b) => {
@@ -141,15 +136,9 @@ export const subscribeToServices = (
         unsubscribeRef = onSnapshot(
             q,
             (querySnapshot) => {
-                const services: Service[] = querySnapshot.docs.map((doc) => {
-                    const data = doc.data();
-                    return {
-                        id: doc.id,
-                        ...data,
-                        createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt),
-                        updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : new Date(data.updatedAt),
-                    } as Service;
-                });
+                const services: Service[] = querySnapshot.docs.map((doc) =>
+                    normalizeService(doc.data(), doc.id)
+                );
                 callback(services);
             },
             (error) => {
@@ -170,15 +159,9 @@ export const subscribeToServices = (
                     unsubscribeRef = onSnapshot(
                         fallbackQuery,
                         (querySnapshot) => {
-                            let services: Service[] = querySnapshot.docs.map((doc) => {
-                                const data = doc.data();
-                                return {
-                                    id: doc.id,
-                                    ...data,
-                                    createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt),
-                                    updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : new Date(data.updatedAt),
-                                } as Service;
-                            });
+                            let services: Service[] = querySnapshot.docs.map((doc) =>
+                                normalizeService(doc.data(), doc.id)
+                            );
 
                             // Sort client-side
                             services.sort((a, b) => {
@@ -216,7 +199,9 @@ export const subscribeToServices = (
  * Create a new service
  */
 export const createService = async (
-    serviceData: Omit<Service, 'id' | 'createdAt' | 'updatedAt'>
+    serviceData: Omit<Service, 'id' | 'createdAt' | 'updatedAt'>,
+    userId?: string,
+    userName?: string
 ): Promise<{ success: boolean; serviceId?: string; error?: string }> => {
     try {
         // Validation
@@ -232,14 +217,25 @@ export const createService = async (
         if (serviceData.duration <= 0) {
             return { success: false, error: 'Duration must be greater than 0' };
         }
+        if (!serviceData.category) {
+            return { success: false, error: 'Category is required' };
+        }
+        if (!userId) {
+            return { success: false, error: 'User ID is required' };
+        }
 
         const newService = {
             ...serviceData,
             title: serviceData.title.trim(),
             name: serviceData.title.trim(), // For backward compatibility
             description: serviceData.description.trim(),
+            providerId: userId,
+            providerName: userName || 'Unknown Provider',
+            status: 'pending' as const, // All new services start as pending
+            isActive: true, // Active by default
             createdAt: Timestamp.now(),
             updatedAt: Timestamp.now(),
+            createdBy: userId,
         };
 
         const docRef = await addDoc(collection(db, 'services'), newService);
@@ -341,13 +337,7 @@ export const getServiceById = async (
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
-            const data = docSnap.data();
-            const service: Service = {
-                id: docSnap.id,
-                ...data,
-                createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt),
-                updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : new Date(data.updatedAt),
-            } as Service;
+            const service = normalizeService(docSnap.data(), docSnap.id);
             return { success: true, service };
         } else {
             return { success: false, error: 'Service not found' };

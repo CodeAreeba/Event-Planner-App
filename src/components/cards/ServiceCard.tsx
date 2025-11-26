@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { Switch, Text, TouchableOpacity, View } from 'react-native';
+import { getCategoryName } from '../../constants/categories';
 import { Service } from '../../types/service';
 import { formatCurrency } from '../../utils/format';
 
@@ -65,6 +66,41 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
             <Text className="text-gray-600 text-sm mb-3" numberOfLines={2}>
                 {service.description}
             </Text>
+
+            {/* Category and Provider Info */}
+            <View className="flex-row items-center mb-2 gap-2">
+                <View className="bg-primary/10 px-2 py-1 rounded-lg">
+                    <Text className="text-primary text-xs font-semibold">
+                        {getCategoryName(service.category)}
+                    </Text>
+                </View>
+                {service.providerName && service.providerName !== 'Unknown Provider' && (
+                    <View className="flex-row items-center">
+                        <Ionicons name="person-outline" size={14} color="#6B7280" />
+                        <Text className="text-gray-600 text-xs ml-1">
+                            {service.providerName}
+                        </Text>
+                    </View>
+                )}
+            </View>
+
+            {/* Approval Status Badge */}
+            {service.status && service.status !== 'approved' && (
+                <View className="mb-2">
+                    <View className={`px-2 py-1 rounded-lg self-start ${service.status === 'pending' ? 'bg-yellow-100' : 'bg-red-100'
+                        }`}>
+                        <Text className={`text-xs font-semibold ${service.status === 'pending' ? 'text-yellow-700' : 'text-red-700'
+                            }`}>
+                            {service.status === 'pending' ? '⏳ Pending Approval' : '✗ Rejected'}
+                        </Text>
+                    </View>
+                    {service.rejectionReason && (
+                        <Text className="text-red-600 text-xs mt-1">
+                            Reason: {service.rejectionReason}
+                        </Text>
+                    )}
+                </View>
+            )}
 
             {/* Duration */}
             <View className="flex-row items-center mb-2">
