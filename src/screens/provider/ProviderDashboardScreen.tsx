@@ -413,7 +413,7 @@ const ProviderDashboardScreen: React.FC = () => {
               >
                 <Ionicons name="calendar" size={24} color="#F59E0B" />
               </View>
-              <Text className="text-gray-900 text-sm font-bold mt-2">
+              <Text className="text-gray-900 text-sm font-bold mt-2 text-center">
                 View Bookings
               </Text>
             </TouchableOpacity>
