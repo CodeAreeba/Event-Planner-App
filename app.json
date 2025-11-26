@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Event-Planner-App",
+    "name": "Event Planner App",
     "slug": "Event-Planner-App",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -18,7 +18,8 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.testing_mail.EventPlannerApp"
     },
     "web": {
       "output": "static",
@@ -42,6 +43,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "dbdf62e0-6eff-4a8a-97ae-deab270cb103"
+      }
     }
   }
 }
