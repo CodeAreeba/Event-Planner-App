@@ -33,6 +33,14 @@ export const uploadImage = async (
     }
 
     try {
+        // Check if storage is initialized
+        if (!storage) {
+            return {
+                success: false,
+                error: 'Firebase Storage is not initialized',
+            };
+        }
+
         // Fetch the image as a blob
         const response = await fetch(uri);
         const blob = await response.blob();
@@ -160,6 +168,14 @@ export const deleteImage = async (
     }
 
     try {
+        // Check if storage is initialized
+        if (!storage) {
+            return {
+                success: false,
+                error: 'Firebase Storage is not initialized',
+            };
+        }
+
         // Extract path from URL
         const path = extractPathFromURL(url);
         if (!path) {

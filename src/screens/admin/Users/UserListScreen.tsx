@@ -276,7 +276,7 @@ const UserListScreen: React.FC = () => {
             </View>
 
             {/* Scrollable Users List */}
-            <View className="flex-1 px-6">
+            <View className="flex-1 px-6 mt-4">
                 {filteredUsers.length === 0 ? (
                     <EmptyState
                         icon="people-outline"
