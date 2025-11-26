@@ -21,7 +21,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
 }) => {
     return (
         <View
-            className={`flex-row items-center bg-gray-100 rounded-full px-4 py-1.5 ${className}`}
+            className={`flex-row items-center bg-gray-100 rounded-full px-4 ${className}`}
         >
             <Ionicons name="search" size={20} color="#6B7280" />
             <TextInput

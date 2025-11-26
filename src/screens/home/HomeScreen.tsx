@@ -145,16 +145,10 @@ const HomeScreen: React.FC = () => {
 
   // Regular User Dashboard View
   return (
-    <ScrollView
-      className="flex-1 bg-gray-50"
-      showsVerticalScrollIndicator={false}
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-      }
-    >
-      {/* Welcome Section with Gradient */}
-      <View className="bg-primary pt-12 pb-8 px-6">
-        <View className="flex-row items-center justify-between mb-4">
+    <View className="flex-1 bg-gray-50">
+      {/* Fixed Header Section */}
+      <View className="bg-primary pt-12 pb-3 px-6">
+        <View className="flex-row items-center justify-between mb-2">
           <View className="flex-1">
             <Text className="text-white/80 text-sm">{getGreeting()},</Text>
             <Text className="text-white text-2xl font-bold">
@@ -167,7 +161,7 @@ const HomeScreen: React.FC = () => {
             </Text>
           </View>
         </View>
-        <Text className="text-white/90 text-sm mb-4">
+        <Text className="text-white/90 text-sm mb-2">
           Plan your perfect event with our services
         </Text>
         <SearchInput
@@ -175,249 +169,269 @@ const HomeScreen: React.FC = () => {
           onChangeText={setSearchQuery}
           placeholder="Search services..."
           onFocus={() => navigation.navigate("Search")}
+          className="py-0.5"
         />
       </View>
 
-      {/* Quick Stats */}
-      <View className="px-6 -mt-6 mb-6">
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          className="gap-x-3"
-        >
-          <View
-            className="bg-white rounded-2xl p-4 shadow-sm mr-3"
-            style={{ width: 140 }}
+      {/* Scrollable Content */}
+      <ScrollView
+        className="flex-1"
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
+        {/* Quick Stats */}
+        <View className="px-6 mt-2 mb-3 ">
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            className="gap-x-3 z-1000"
           >
-            <View className="w-10 h-10 bg-blue-100 rounded-full items-center justify-center mb-2">
-              <Ionicons name="calendar" size={20} color="#3B82F6" />
+            <View className="flex flex-row gap-x-3">
+            <View
+              className="bg-white rounded-2xl p-4 shadow-sm "
+              style={{ width: 140 }}
+            >
+              <View className="w-10 h-10 bg-blue-100 rounded-full items-center justify-center mb-2">
+                <Ionicons name="calendar" size={20} color="#3B82F6" />
+              </View>
+              <Text className="text-2xl font-bold text-gray-900">
+                {bookingStats.total}
+              </Text>
+              <Text className="text-gray-500 text-xs">Total Bookings</Text>
             </View>
-            <Text className="text-2xl font-bold text-gray-900">
-              {bookingStats.total}
-            </Text>
-            <Text className="text-gray-500 text-xs">Total Bookings</Text>
-          </View>
 
-          <View
-            className="bg-white rounded-2xl p-4 shadow-sm mr-3"
-            style={{ width: 140 }}
-          >
-            <View className="w-10 h-10 bg-green-100 rounded-full items-center justify-center mb-2">
-              <Ionicons name="time" size={20} color="#10B981" />
+            <View
+              className="bg-white rounded-2xl p-4 shadow-sm "
+              style={{ width: 140 }}
+            >
+              <View className="w-10 h-10 bg-green-100 rounded-full items-center justify-center mb-2">
+                <Ionicons name="time" size={20} color="#10B981" />
+              </View>
+              <Text className="text-2xl font-bold text-gray-900">
+                {bookingStats.upcoming}
+              </Text>
+              <Text className="text-gray-500 text-xs">Upcoming</Text>
             </View>
-            <Text className="text-2xl font-bold text-gray-900">
-              {bookingStats.upcoming}
-            </Text>
-            <Text className="text-gray-500 text-xs">Upcoming</Text>
-          </View>
 
-          <View
-            className="bg-white rounded-2xl p-4 shadow-sm mr-3"
-            style={{ width: 140 }}
-          >
-            <View className="w-10 h-10 bg-purple-100 rounded-full items-center justify-center mb-2">
-              <Ionicons name="checkmark-circle" size={20} color="#8B5CF6" />
+            <View
+              className="bg-white rounded-2xl p-4 shadow-sm "
+              style={{ width: 140 }}
+            >
+              <View className="w-10 h-10 bg-purple-100 rounded-full items-center justify-center mb-2">
+                <Ionicons name="checkmark-circle" size={20} color="#8B5CF6" />
+              </View>
+              <Text className="text-2xl font-bold text-gray-900">
+                {bookingStats.completed}
+              </Text>
+              <Text className="text-gray-500 text-xs">Completed</Text>
             </View>
-            <Text className="text-2xl font-bold text-gray-900">
-              {bookingStats.completed}
-            </Text>
-            <Text className="text-gray-500 text-xs">Completed</Text>
-          </View>
-        </ScrollView>
-      </View>
-
-      {/* Quick Actions */}
-      <View className="px-6 mb-6">
-        <Text className="text-gray-900 text-lg font-bold mb-4">
-          Quick Actions
-        </Text>
-        <View className="flex-row flex-wrap gap-3">
-          <TouchableOpacity
-            onPress={() => navigation.navigate("Search")}
-            className="bg-white rounded-2xl p-4 shadow-sm flex-1"
-            style={{ minWidth: "47%" }}
-          >
-            <View className="w-12 h-12 bg-primary/10 rounded-full items-center justify-center mb-2">
-              <Ionicons name="search" size={24} color="#6366F1" />
             </View>
-            <Text className="text-gray-900 font-semibold">Browse Services</Text>
-            <Text className="text-gray-500 text-xs mt-1">
-              Find perfect services
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() =>
-              navigation.navigate("MainTabs", { screen: "Bookings" })
-            }
-            className="bg-white rounded-2xl p-4 shadow-sm flex-1"
-            style={{ minWidth: "47%" }}
-          >
-            <View className="w-12 h-12 bg-blue-100 rounded-full items-center justify-center mb-2">
-              <Ionicons name="calendar-outline" size={24} color="#3B82F6" />
-            </View>
-            <Text className="text-gray-900 font-semibold">My Bookings</Text>
-            <Text className="text-gray-500 text-xs mt-1">
-              View all bookings
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => navigation.navigate("CreateBooking", {})}
-            className="bg-white rounded-2xl p-4 shadow-sm flex-1"
-            style={{ minWidth: "47%" }}
-          >
-            <View className="w-12 h-12 bg-green-100 rounded-full items-center justify-center mb-2">
-              <Ionicons name="add-circle-outline" size={24} color="#10B981" />
-            </View>
-            <Text className="text-gray-900 font-semibold">Create Booking</Text>
-            <Text className="text-gray-500 text-xs mt-1">Book a service</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() =>
-              navigation.navigate("MainTabs", { screen: "Profile" })
-            }
-            className="bg-white rounded-2xl p-4 shadow-sm flex-1"
-            style={{ minWidth: "47%" }}
-          >
-            <View className="w-12 h-12 bg-purple-100 rounded-full items-center justify-center mb-2">
-              <Ionicons name="person-outline" size={24} color="#8B5CF6" />
-            </View>
-            <Text className="text-gray-900 font-semibold">My Profile</Text>
-            <Text className="text-gray-500 text-xs mt-1">
-              View & edit profile
-            </Text>
-          </TouchableOpacity>
+          </ScrollView>
         </View>
-      </View>
 
-      {/* Recent Bookings */}
-      {recentBookings.length > 0 && (
+        {/* Quick Actions */}
         <View className="px-6 mb-6">
-          <View className="flex-row justify-between items-center mb-4">
-            <Text className="text-gray-900 text-lg font-bold">
-              Recent Bookings
-            </Text>
+          <Text className="text-gray-900 text-lg font-bold mb-4">
+            Quick Actions
+          </Text>
+          <View className="flex-row flex-wrap gap-3">
+            <TouchableOpacity
+              onPress={() => navigation.navigate("Search")}
+              className="bg-white rounded-2xl p-4 shadow-sm flex-1"
+              style={{ minWidth: "47%" }}
+            >
+              <View className="w-12 h-12 bg-primary/10 rounded-full items-center justify-center mb-2">
+                <Ionicons name="search" size={24} color="#6366F1" />
+              </View>
+              <Text className="text-gray-900 font-semibold">
+                Browse Services
+              </Text>
+              <Text className="text-gray-500 text-xs mt-1">
+                Find perfect services
+              </Text>
+            </TouchableOpacity>
+
             <TouchableOpacity
               onPress={() =>
                 navigation.navigate("MainTabs", { screen: "Bookings" })
               }
+              className="bg-white rounded-2xl p-4 shadow-sm flex-1"
+              style={{ minWidth: "47%" }}
             >
-              <Text className="text-primary text-sm font-semibold">
-                View All
+              <View className="w-12 h-12 bg-blue-100 rounded-full items-center justify-center mb-2">
+                <Ionicons name="calendar-outline" size={24} color="#3B82F6" />
+              </View>
+              <Text className="text-gray-900 font-semibold">My Bookings</Text>
+              <Text className="text-gray-500 text-xs mt-1">
+                View all bookings
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => navigation.navigate("CreateBooking", {})}
+              className="bg-white rounded-2xl p-4 shadow-sm flex-1"
+              style={{ minWidth: "47%" }}
+            >
+              <View className="w-12 h-12 bg-green-100 rounded-full items-center justify-center mb-2">
+                <Ionicons name="add-circle-outline" size={24} color="#10B981" />
+              </View>
+              <Text className="text-gray-900 font-semibold">
+                Create Booking
+              </Text>
+              <Text className="text-gray-500 text-xs mt-1">Book a service</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() =>
+                navigation.navigate("MainTabs", { screen: "Profile" })
+              }
+              className="bg-white rounded-2xl p-4 shadow-sm flex-1"
+              style={{ minWidth: "47%" }}
+            >
+              <View className="w-12 h-12 bg-purple-100 rounded-full items-center justify-center mb-2">
+                <Ionicons name="person-outline" size={24} color="#8B5CF6" />
+              </View>
+              <Text className="text-gray-900 font-semibold">My Profile</Text>
+              <Text className="text-gray-500 text-xs mt-1">
+                View & edit profile
               </Text>
             </TouchableOpacity>
           </View>
-          {recentBookings.map((booking) => (
-            <TouchableOpacity
-              key={booking.id}
-              onPress={() =>
-                navigation.navigate("BookingDetails", {
-                  bookingId: booking.id!,
-                })
-              }
-              className="bg-white rounded-2xl p-4 mb-3 shadow-sm"
-            >
-              <View className="flex-row justify-between items-start mb-2">
-                <Text className="text-gray-900 font-semibold flex-1">
-                  {booking.serviceName}
+        </View>
+
+        {/* Recent Bookings */}
+        {recentBookings.length > 0 && (
+          <View className="px-6 mb-6">
+            <View className="flex-row justify-between items-center mb-4">
+              <Text className="text-gray-900 text-lg font-bold">
+                Recent Bookings
+              </Text>
+              <TouchableOpacity
+                onPress={() =>
+                  navigation.navigate("MainTabs", { screen: "Bookings" })
+                }
+              >
+                <Text className="text-primary text-sm font-semibold">
+                  View All
                 </Text>
-                <View
-                  className={`px-2 py-1 rounded-full ${getStatusColor(booking.status)}`}
-                >
-                  <Text className="text-xs font-semibold capitalize">
-                    {booking.status}
+              </TouchableOpacity>
+            </View>
+            {recentBookings.map((booking) => (
+              <TouchableOpacity
+                key={booking.id}
+                onPress={() =>
+                  navigation.navigate("BookingDetails", {
+                    bookingId: booking.id!,
+                  })
+                }
+                className="bg-white rounded-2xl p-4 mb-3 shadow-sm"
+              >
+                <View className="flex-row justify-between items-start mb-2">
+                  <Text className="text-gray-900 font-semibold flex-1">
+                    {booking.serviceName}
+                  </Text>
+                  <View
+                    className={`px-2 py-1 rounded-full ${getStatusColor(booking.status)}`}
+                  >
+                    <Text className="text-xs font-semibold capitalize">
+                      {booking.status}
+                    </Text>
+                  </View>
+                </View>
+                <View className="flex-row items-center">
+                  <Ionicons name="calendar-outline" size={14} color="#9CA3AF" />
+                  <Text className="text-gray-500 text-sm ml-1">
+                    {new Date(booking.date).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                  </Text>
+                  <Ionicons
+                    name="time-outline"
+                    size={14}
+                    color="#9CA3AF"
+                    className="ml-3"
+                  />
+                  <Text className="text-gray-500 text-sm ml-1">
+                    {booking.time}
                   </Text>
                 </View>
-              </View>
-              <View className="flex-row items-center">
-                <Ionicons name="calendar-outline" size={14} color="#9CA3AF" />
-                <Text className="text-gray-500 text-sm ml-1">
-                  {new Date(booking.date).toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                  })}
-                </Text>
-                <Ionicons
-                  name="time-outline"
-                  size={14}
-                  color="#9CA3AF"
-                  className="ml-3"
-                />
-                <Text className="text-gray-500 text-sm ml-1">
-                  {booking.time}
-                </Text>
-              </View>
-            </TouchableOpacity>
-          ))}
-        </View>
-      )}
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
 
-      {/* Categories */}
-      <View className="px-6 mb-6">
-        <Text className="text-gray-900 text-lg font-bold mb-4">Categories</Text>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          className="gap-x-3"
-        >
-          {CATEGORIES.map((category) => (
-            <TouchableOpacity
-              key={category.id}
-              onPress={() => navigation.navigate("Search")}
-              className="bg-white rounded-2xl p-4 shadow-sm items-center mr-2.5"
-              style={{ width: 110 }}
-            >
-              <View
-                className="w-14 h-14 rounded-full items-center justify-center mb-2"
-                style={{ backgroundColor: category.color + "20" }}
+        {/* Categories */}
+        <View className="px-6 mb-6">
+          <Text className="text-gray-900 text-lg font-bold mb-4">
+            Categories
+          </Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            className="gap-x-3"
+          >
+            {CATEGORIES.map((category) => (
+              <TouchableOpacity
+                key={category.id}
+                onPress={() => navigation.navigate("Search")}
+                className="bg-white rounded-2xl p-4 shadow-sm items-center mr-2.5"
+                style={{ width: 110 }}
               >
-                <Ionicons
-                  name={category.icon as any}
-                  size={28}
-                  color={category.color}
-                />
-              </View>
-              <Text className="text-gray-900 text-xs font-semibold text-center">
-                {category.name}
+                <View
+                  className="w-14 h-14 rounded-full items-center justify-center mb-2"
+                  style={{ backgroundColor: category.color + "20" }}
+                >
+                  <Ionicons
+                    name={category.icon as any}
+                    size={28}
+                    color={category.color}
+                  />
+                </View>
+                <Text className="text-gray-900 text-xs font-semibold text-center">
+                  {category.name}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+
+        {/* Featured Services */}
+        <View className="px-6 mb-24">
+          <View className="flex-row justify-between items-center mb-4">
+            <Text className="text-gray-900 text-lg font-bold">
+              Featured Services
+            </Text>
+            <TouchableOpacity onPress={() => navigation.navigate("Search")}>
+              <Text className="text-primary text-sm font-semibold">
+                See All
               </Text>
             </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
+          </View>
 
-      {/* Featured Services */}
-      <View className="px-6 mb-24">
-        <View className="flex-row justify-between items-center mb-4">
-          <Text className="text-gray-900 text-lg font-bold">
-            Featured Services
-          </Text>
-          <TouchableOpacity onPress={() => navigation.navigate("Search")}>
-            <Text className="text-primary text-sm font-semibold">See All</Text>
-          </TouchableOpacity>
+          {services.length === 0 ? (
+            <EmptyState
+              icon="briefcase-outline"
+              title="No Services Available"
+              description="Check back later for available services"
+            />
+          ) : (
+            services
+              .slice(0, 5)
+              .map((service) => (
+                <ServiceCard
+                  key={service.id}
+                  service={service}
+                  onPress={() => handleServicePress(service.id!)}
+                />
+              ))
+          )}
         </View>
-
-        {services.length === 0 ? (
-          <EmptyState
-            icon="briefcase-outline"
-            title="No Services Available"
-            description="Check back later for available services"
-          />
-        ) : (
-          services
-            .slice(0, 5)
-            .map((service) => (
-              <ServiceCard
-                key={service.id}
-                service={service}
-                onPress={() => handleServicePress(service.id!)}
-              />
-            ))
-        )}
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 };
 
