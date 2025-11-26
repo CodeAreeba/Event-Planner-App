@@ -40,6 +40,8 @@ export const createBooking = async (
     bookingData: Omit<Booking, 'id' | 'createdAt' | 'updatedAt' | 'status'>
 ): Promise<{ success: boolean; bookingId?: string; error?: string }> => {
     try {
+        console.log('\n💾 Saving booking to Firestore...');
+
         const bookingWithDefaults = {
             ...bookingData,
             status: 'pending' as BookingStatus,
@@ -47,10 +49,33 @@ export const createBooking = async (
             updatedAt: Timestamp.now(),
         };
 
+        console.log('📊 Complete Booking Document:');
+        console.log('  userId:', bookingWithDefaults.userId);
+        console.log('  providerId:', bookingWithDefaults.providerId);
+        console.log('  serviceId:', bookingWithDefaults.serviceId);
+        console.log('  status:', bookingWithDefaults.status);
+        console.log('  price:', bookingWithDefaults.price);
+
+        // Validation warnings
+        if (!bookingWithDefaults.providerId || bookingWithDefaults.providerId === 'unknown') {
+            console.warn('⚠️ WARNING: Booking has no valid provider ID!');
+        }
+        if (!bookingWithDefaults.userId) {
+            console.warn('⚠️ WARNING: Booking has no user ID!');
+        }
+
         const docRef = await addDoc(collection(db, 'bookings'), bookingWithDefaults);
+
+        console.log('✅ Booking saved to Firestore');
+        console.log('  Document ID:', docRef.id);
+        console.log('  Collection: bookings');
+        console.log('  Provider can query with: { providerId:', bookingWithDefaults.providerId, '}');
+
         return { success: true, bookingId: docRef.id };
     } catch (error: any) {
-        console.error('Create booking error:', error);
+        console.error('❌ Create booking error:', error);
+        console.error('  Error message:', error.message);
+        console.error('  Error code:', error.code);
         return { success: false, error: error.message };
     }
 };
@@ -140,6 +165,7 @@ export const getBookings = async (filters?: {
     status?: BookingStatus;
 }): Promise<{ success: boolean; bookings?: Booking[]; error?: string }> => {
     try {
+        // Try optimized query with orderBy first
         let q = query(collection(db, 'bookings'), orderBy('date', 'asc'));
 
         if (filters?.userId) {
@@ -160,6 +186,49 @@ export const getBookings = async (filters?: {
 
         return { success: true, bookings };
     } catch (error: any) {
+        // If index is missing, use fallback query without orderBy
+        if (error.code === 'failed-precondition' || error.message?.includes('index')) {
+            console.log('⚠️ Firestore index not available, using fallback query without orderBy...');
+
+            try {
+                // Build query without orderBy
+                const constraints: any[] = [];
+
+                if (filters?.userId) {
+                    constraints.push(where('userId', '==', filters.userId));
+                }
+                if (filters?.providerId) {
+                    constraints.push(where('providerId', '==', filters.providerId));
+                }
+                if (filters?.status) {
+                    constraints.push(where('status', '==', filters.status));
+                }
+
+                const fallbackQ = constraints.length > 0
+                    ? query(collection(db, 'bookings'), ...constraints)
+                    : collection(db, 'bookings');
+
+                const querySnapshot = await getDocs(fallbackQ);
+                let bookings: Booking[] = querySnapshot.docs.map((doc) => ({
+                    id: doc.id,
+                    ...doc.data(),
+                })) as Booking[];
+
+                // Sort client-side since we can't use orderBy
+                bookings.sort((a, b) => {
+                    const dateA = a.date instanceof Date ? a.date : new Date(a.date);
+                    const dateB = b.date instanceof Date ? b.date : new Date(b.date);
+                    return dateA.getTime() - dateB.getTime();
+                });
+
+                console.log('✅ Fallback query successful, sorted', bookings.length, 'bookings client-side');
+                return { success: true, bookings };
+            } catch (fallbackError: any) {
+                console.error('❌ Fallback query error:', fallbackError);
+                return { success: false, error: fallbackError.message, bookings: [] };
+            }
+        }
+
         console.error('Get bookings error:', error);
         return { success: false, error: error.message, bookings: [] };
     }

@@ -208,7 +208,7 @@ export const subscribeToServices = (
         };
     } catch (error: any) {
         console.error('Subscribe to services error:', error);
-        return () => { };
+        return () => { }; // Return empty unsubscribe function
     }
 };
 
@@ -216,40 +216,33 @@ export const subscribeToServices = (
  * Create a new service
  */
 export const createService = async (
-    serviceData: Omit<Service, 'id' | 'createdAt' | 'updatedAt' | 'isActive' | 'createdBy'>,
-    userId?: string
+    serviceData: Omit<Service, 'id' | 'createdAt' | 'updatedAt'>
 ): Promise<{ success: boolean; serviceId?: string; error?: string }> => {
     try {
         // Validation
-        const title = serviceData.title || serviceData.name;
-        if (!title || title.trim().length < 3) {
-            return { success: false, error: 'Service title must be at least 3 characters' };
+        if (!serviceData.title || serviceData.title.trim().length < 3) {
+            return { success: false, error: 'Title must be at least 3 characters' };
         }
         if (!serviceData.description || serviceData.description.trim().length < 10) {
             return { success: false, error: 'Description must be at least 10 characters' };
         }
-        if (!serviceData.price || serviceData.price <= 0) {
+        if (serviceData.price <= 0) {
             return { success: false, error: 'Price must be greater than 0' };
         }
-        if (!serviceData.duration || serviceData.duration <= 0) {
+        if (serviceData.duration <= 0) {
             return { success: false, error: 'Duration must be greater than 0' };
         }
 
-        const serviceWithDefaults: any = {
+        const newService = {
             ...serviceData,
-            title: title.trim(),
-            name: title.trim(), // Keep name in sync with title for backward compatibility
-            isActive: true,
+            title: serviceData.title.trim(),
+            name: serviceData.title.trim(), // For backward compatibility
+            description: serviceData.description.trim(),
             createdAt: Timestamp.now(),
             updatedAt: Timestamp.now(),
         };
 
-        // Add createdBy if userId is provided
-        if (userId) {
-            serviceWithDefaults.createdBy = userId;
-        }
-
-        const docRef = await addDoc(collection(db, 'services'), serviceWithDefaults);
+        const docRef = await addDoc(collection(db, 'services'), newService);
         return { success: true, serviceId: docRef.id };
     } catch (error: any) {
         console.error('Create service error:', error);
@@ -262,13 +255,12 @@ export const createService = async (
  */
 export const updateService = async (
     serviceId: string,
-    updates: Partial<Omit<Service, 'id' | 'createdAt' | 'updatedAt' | 'isActive' | 'createdBy'>>
+    updates: Partial<Omit<Service, 'id' | 'createdAt' | 'updatedAt'>>
 ): Promise<{ success: boolean; error?: string }> => {
     try {
         // Validation
-        const title = updates.title || updates.name;
-        if (title && title.trim().length < 3) {
-            return { success: false, error: 'Service title must be at least 3 characters' };
+        if (updates.title !== undefined && updates.title.trim().length < 3) {
+            return { success: false, error: 'Title must be at least 3 characters' };
         }
         if (updates.description && updates.description.trim().length < 10) {
             return { success: false, error: 'Description must be at least 10 characters' };
@@ -283,9 +275,9 @@ export const updateService = async (
         const updateData: any = { ...updates };
 
         // If title is being updated, also update name for backward compatibility
-        if (title) {
-            updateData.title = title.trim();
-            updateData.name = title.trim();
+        if (updates.title) {
+            updateData.title = updates.title.trim();
+            updateData.name = updates.title.trim();
         }
 
         updateData.updatedAt = Timestamp.now();

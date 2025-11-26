@@ -41,7 +41,11 @@ const AppStack: React.FC = () => {
             <Stack.Screen
                 name="AddService"
                 component={AddServiceScreen}
-                options={{ headerShown: true, title: 'Add Service' }}
+                options={{ 
+                    headerShown: true, 
+                    title: 'Add Service',
+                    contentStyle: { paddingTop: 16 }
+                }}
             />
             <Stack.Screen
                 name="EditService"

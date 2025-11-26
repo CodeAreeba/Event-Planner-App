@@ -13,7 +13,7 @@ import { AppStackNavigationProp } from '../../types/navigation';
 
 const BookingsScreen: React.FC = () => {
     const navigation = useNavigation<AppStackNavigationProp>();
-    const { user, isAdmin } = useAuth();
+    const { user, isAdmin, userProfile } = useAuth();
     const insets = useSafeAreaInsets();
     const [bookings, setBookings] = useState<Booking[]>([]);
     const [loading, setLoading] = useState(true);
@@ -25,21 +25,42 @@ const BookingsScreen: React.FC = () => {
 
         setLoading(true);
 
+        console.log('\n📅 ===== BOOKINGS SCREEN LOAD =====');
+        console.log('👤 User ID:', user.uid);
+        console.log('🎭 User Role:', userProfile?.role || 'unknown');
+        console.log('👑 Is Admin:', isAdmin);
+
+        // Determine filter based on user role
+        let filterConfig = {};
+
+        if (isAdmin) {
+            // Admin sees all bookings
+            console.log('🔍 Filter: ALL BOOKINGS (admin view)');
+            filterConfig = {};
+        } else if (userProfile?.role === 'provider') {
+            // Provider sees bookings for their services
+            console.log('🔍 Filter: PROVIDER BOOKINGS (providerId:', user.uid, ')');
+            filterConfig = { providerId: user.uid };
+        } else {
+            // Customer sees their own bookings
+            console.log('🔍 Filter: CUSTOMER BOOKINGS (userId:', user.uid, ')');
+            filterConfig = { userId: user.uid };
+        }
+
         // Subscribe to real-time updates
-        // If admin, fetch all bookings (pass undefined for userId)
-        // If regular user, fetch only their bookings
         const unsubscribe = subscribeToBookings(
             (fetchedBookings) => {
+                console.log('📊 Received', fetchedBookings.length, 'bookings');
                 setBookings(fetchedBookings);
                 setLoading(false);
                 setRefreshing(false);
             },
-            isAdmin ? {} : { userId: user.uid }
+            filterConfig
         );
 
         // Cleanup subscription on unmount
         return () => unsubscribe();
-    }, [user, isAdmin]);
+    }, [user, isAdmin, userProfile]);
 
     const onRefresh = async () => {
         setRefreshing(true);
@@ -103,7 +124,7 @@ const BookingsScreen: React.FC = () => {
             {/* Header */}
             <View className="bg-white px-6 pb-4 border-b border-gray-200" style={{ paddingTop: insets.top + 16 }}>
                 <Text className="text-gray-900 text-2xl font-bold mb-4">
-                    {isAdmin ? 'Booking Management' : 'My Bookings'}
+                    {isAdmin ? 'Booking Management' : userProfile?.role === 'provider' ? 'Provider Bookings' : 'My Bookings'}
                 </Text>
 
                 {/* Filter Tabs */}

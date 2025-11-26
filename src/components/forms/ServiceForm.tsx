@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Alert, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { ServiceFormData } from '../../types/service';
+import PrimaryButton from '../buttons/PrimaryButton';
 
 interface ServiceFormProps {
     initialValues?: ServiceFormData;
@@ -27,28 +28,24 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
             newErrors.title = 'Service title is required';
         } else if (title.trim().length < 3) {
             newErrors.title = 'Title must be at least 3 characters';
-        } else if (title.trim().length > 100) {
-            newErrors.title = 'Title must not exceed 100 characters';
         }
 
         if (!description.trim()) {
             newErrors.description = 'Description is required';
         } else if (description.trim().length < 10) {
             newErrors.description = 'Description must be at least 10 characters';
-        } else if (description.trim().length > 500) {
-            newErrors.description = 'Description must not exceed 500 characters';
         }
 
         if (!price.trim()) {
             newErrors.price = 'Price is required';
         } else if (isNaN(Number(price)) || Number(price) <= 0) {
-            newErrors.price = 'Price must be a number greater than 0';
+            newErrors.price = 'Price must be greater than 0';
         }
 
         if (!duration.trim()) {
             newErrors.duration = 'Duration is required';
         } else if (isNaN(Number(duration)) || Number(duration) <= 0) {
-            newErrors.duration = 'Duration must be a number greater than 0';
+            newErrors.duration = 'Duration must be greater than 0';
         }
 
         setErrors(newErrors);
@@ -80,94 +77,142 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
     return (
         <ScrollView
             className="flex-1 bg-gray-50 px-6"
-            contentContainerStyle={{ paddingTop: 16, paddingBottom: 24 }}
+            contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
         >
             {/* Service Title */}
-            <View className="mb-4">
-                <Text className="text-gray-700 text-sm font-semibold mb-2">
-                    Service Title <Text className="text-error">*</Text>
-                </Text>
+            <View style={styles.fieldContainer}>
+                <Text style={styles.label}>Service Title <Text style={styles.required}>*</Text></Text>
                 <TextInput
                     value={title}
                     onChangeText={setTitle}
                     placeholder="e.g., Wedding Photography"
-                    className={`bg-white border ${errors.title ? 'border-error' : 'border-gray-300'} rounded-xl px-4 py-3 text-gray-900`}
+                    placeholderTextColor="#9CA3AF"
+                    style={[styles.input, errors.title && styles.inputError]}
                     editable={!loading}
                 />
-                {errors.title && (
-                    <Text className="text-error text-xs mt-1">{errors.title}</Text>
-                )}
+                {errors.title ? (
+                    <Text style={styles.errorText}>{errors.title}</Text>
+                ) : null}
             </View>
 
             {/* Description */}
-            <View className="mb-4">
-                <Text className="text-gray-700 text-sm font-semibold mb-2">
-                    Description <Text className="text-error">*</Text>
-                </Text>
+            <View style={styles.fieldContainer}>
+                <Text style={styles.label}>Description <Text style={styles.required}>*</Text></Text>
                 <TextInput
                     value={description}
                     onChangeText={setDescription}
                     placeholder="Describe your service..."
+                    placeholderTextColor="#9CA3AF"
                     multiline
                     numberOfLines={4}
+                    style={[styles.input, styles.textArea, errors.description && styles.inputError]}
                     textAlignVertical="top"
-                    className={`bg-white border ${errors.description ? 'border-error' : 'border-gray-300'} rounded-xl px-4 py-3 text-gray-900`}
                     editable={!loading}
                 />
-                {errors.description && (
-                    <Text className="text-error text-xs mt-1">{errors.description}</Text>
-                )}
+                {errors.description ? (
+                    <Text style={styles.errorText}>{errors.description}</Text>
+                ) : null}
             </View>
 
-            {/* Price */}
-            <View className="mb-4">
-                <Text className="text-gray-700 text-sm font-semibold mb-2">
-                    Price (PKR) <Text className="text-error">*</Text>
-                </Text>
-                <TextInput
-                    value={price}
-                    onChangeText={setPrice}
-                    placeholder="e.g., 50000"
-                    keyboardType="numeric"
-                    className={`bg-white border ${errors.price ? 'border-error' : 'border-gray-300'} rounded-xl px-4 py-3 text-gray-900`}
-                    editable={!loading}
-                />
-                {errors.price && (
-                    <Text className="text-error text-xs mt-1">{errors.price}</Text>
-                )}
-            </View>
+            {/* Price and Duration Row */}
+            <View style={styles.row}>
+                {/* Price */}
+                <View style={[styles.fieldContainer, styles.halfWidth]}>
+                    <Text style={styles.label}>Price (PKR) <Text style={styles.required}>*</Text></Text>
+                    <TextInput
+                        value={price}
+                        onChangeText={setPrice}
+                        placeholder="50000"
+                        placeholderTextColor="#9CA3AF"
+                        keyboardType="numeric"
+                        style={[styles.input, errors.price && styles.inputError]}
+                        editable={!loading}
+                    />
+                    {errors.price ? (
+                        <Text style={styles.errorText}>{errors.price}</Text>
+                    ) : null}
+                </View>
 
-            {/* Duration */}
-            <View className="mb-6">
-                <Text className="text-gray-700 text-sm font-semibold mb-2">
-                    Duration (minutes) <Text className="text-error">*</Text>
-                </Text>
-                <TextInput
-                    value={duration}
-                    onChangeText={setDuration}
-                    placeholder="e.g., 120"
-                    keyboardType="numeric"
-                    className={`bg-white border ${errors.duration ? 'border-error' : 'border-gray-300'} rounded-xl px-4 py-3 text-gray-900`}
-                    editable={!loading}
-                />
-                {errors.duration && (
-                    <Text className="text-error text-xs mt-1">{errors.duration}</Text>
-                )}
+                {/* Duration */}
+                <View style={[styles.fieldContainer, styles.halfWidth]}>
+                    <Text style={styles.label}>Duration (min) <Text style={styles.required}>*</Text></Text>
+                    <TextInput
+                        value={duration}
+                        onChangeText={setDuration}
+                        placeholder="120"
+                        placeholderTextColor="#9CA3AF"
+                        keyboardType="numeric"
+                        style={[styles.input, errors.duration && styles.inputError]}
+                        editable={!loading}
+                    />
+                    {errors.duration ? (
+                        <Text style={styles.errorText}>{errors.duration}</Text>
+                    ) : null}
+                </View>
             </View>
 
             {/* Submit Button */}
-            <TouchableOpacity
-                onPress={handleSubmit}
-                disabled={loading}
-                className={`${loading ? 'bg-gray-400' : 'bg-primary'} rounded-xl py-4 items-center mb-6`}
-            >
-                <Text className="text-white text-base font-bold">
-                    {loading ? 'Submitting...' : submitButtonText}
-                </Text>
-            </TouchableOpacity>
+            <View style={styles.buttonContainer}>
+                <PrimaryButton
+                    title={submitButtonText}
+                    onPress={handleSubmit}
+                    loading={loading}
+                />
+            </View>
         </ScrollView>
     );
 };
+
+const styles = StyleSheet.create({
+    scrollContent: {
+        paddingTop: 20,
+        paddingBottom: 24,
+    },
+    fieldContainer: {
+        marginBottom: 20,
+    },
+    row: {
+        flexDirection: 'row',
+        gap: 16,
+    },
+    halfWidth: {
+        flex: 1,
+    },
+    label: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#374151',
+        marginBottom: 8,
+    },
+    required: {
+        color: '#EF4444',
+    },
+    input: {
+        backgroundColor: '#FFFFFF',
+        borderWidth: 1,
+        borderColor: '#E5E7EB',
+        borderRadius: 12,
+        paddingHorizontal: 16,
+        paddingVertical: 14,
+        fontSize: 16,
+        color: '#111827',
+    },
+    inputError: {
+        borderColor: '#EF4444',
+    },
+    textArea: {
+        minHeight: 120,
+        paddingTop: 14,
+    },
+    errorText: {
+        fontSize: 12,
+        color: '#EF4444',
+        marginTop: 6,
+    },
+    buttonContainer: {
+        marginTop: 12,
+    },
+});
 
 export default ServiceForm;
