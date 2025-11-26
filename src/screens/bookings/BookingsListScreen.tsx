@@ -10,13 +10,13 @@ import {
     View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import BookingCard from '../../../components/common/BookingCard';
-import LoadingState from '../../../components/common/LoadingState';
-import SearchBar from '../../../components/common/SearchBar';
-import EmptyState from '../../../components/ui/EmptyState';
-import { useAuth } from '../../../context/AuthContext';
-import { Booking, deleteBooking, getBookings } from '../../../firebase/bookings';
-import { AppStackNavigationProp } from '../../../types/navigation';
+import BookingCard from '../../components/cards/BookingCard';
+import LoadingState from '../../components/common/LoadingState';
+import SearchBar from '../../components/common/SearchBar';
+import EmptyState from '../../components/ui/EmptyState';
+import { useAuth } from '../../context/AuthContext';
+import { Booking, deleteBooking, getBookings } from '../../firebase/bookings';
+import { AppStackNavigationProp } from '../../types/navigation';
 
 const BookingsListScreen: React.FC = () => {
     const navigation = useNavigation<AppStackNavigationProp>();
@@ -106,7 +106,7 @@ const BookingsListScreen: React.FC = () => {
                     <Text className="text-white text-2xl font-bold">Bookings</Text>
                     {isAdmin && (
                         <TouchableOpacity
-                            onPress={() => navigation.navigate('AddBooking')}
+                            onPress={() => navigation.navigate('CreateBooking', {})}
                             className="bg-white/20 px-4 py-2 rounded-full flex-row items-center"
                         >
                             <Ionicons name="add" size={20} color="white" />

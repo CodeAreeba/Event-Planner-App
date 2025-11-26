@@ -50,7 +50,6 @@ export const getAllServices = async (): Promise<{ success: boolean; services?: S
                 updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : new Date(data.updatedAt),
             } as Service;
         });
-
         return { success: true, services };
     } catch (error: any) {
         console.error('Get all services error:', error);

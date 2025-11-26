@@ -27,9 +27,17 @@ const ProviderDashboardScreen: React.FC = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [services, setServices] = useState<Service[]>([]);
   const [stats, setStats] = useState({
+    // Service stats
     totalServices: 0,
+    pendingServices: 0,
+    approvedServices: 0,
+    rejectedServices: 0,
+    // Booking stats
     pendingBookings: 0,
+    confirmedBookings: 0,
     completedBookings: 0,
+    cancelledBookings: 0,
+    // Financial
     totalEarnings: 0,
   });
 
@@ -44,14 +52,6 @@ const ProviderDashboardScreen: React.FC = () => {
     }
 
     setLoading(true);
-    console.log("\n🔍 ===== PROVIDER DASHBOARD DATA LOAD START =====");
-    console.log("📋 Current user ID:", user.uid);
-    console.log(
-      "👤 User profile:",
-      userProfile?.name,
-      "| Role:",
-      userProfile?.role
-    );
 
     try {
       // Auto-update past bookings for this user to 'completed' status
@@ -62,53 +62,22 @@ const ProviderDashboardScreen: React.FC = () => {
         console.log("Could not auto-update past bookings");
       }
 
-      // 1. Get Provider's Services
-      console.log("\n📦 Fetching all services...");
       const { success: serviceSuccess, services: allServices } =
         await getAllServices();
-
       if (serviceSuccess && allServices) {
-        console.log(
-          "✅ Total services fetched from Firestore:",
-          allServices.length
-        );
-
-        // Log first few services for debugging
-        if (allServices.length > 0) {
-          console.log("📝 Sample services (first 3):");
-          allServices.slice(0, 3).forEach((s, idx) => {
-            console.log(
-              `  ${idx + 1}. ID: ${s.id} | Title: ${s.title} | CreatedBy: ${s.createdBy}`
-            );
-          });
-        }
-
         const myServices = allServices.filter((s) => s.createdBy === user.uid);
-        console.log(
-          `\n🎯 Filtered services for provider (${user.uid}):`,
-          myServices.length
-        );
-
-        if (myServices.length > 0) {
-          console.log("✅ My services:");
-          myServices.forEach((s, idx) => {
-            console.log(`  ${idx + 1}. ${s.title} (ID: ${s.id})`);
-          });
-        } else {
-          console.log("⚠️ No services found for this provider");
-        }
-
         setServices(myServices);
 
-        // Update stats with service count first
-        setStats((prev) => ({
-          ...prev,
-          totalServices: myServices.length,
-        }));
-
-        // 2. Get Bookings for this provider
-        console.log("\n📅 Fetching bookings for provider...");
-        console.log("🔍 Query filter: { providerId:", user.uid, "}");
+        // Count service statuses
+        const pendingServices = myServices.filter(
+          (s) => s.status === "pending"
+        ).length;
+        const approvedServices = myServices.filter(
+          (s) => s.status === "approved"
+        ).length;
+        const rejectedServices = myServices.filter(
+          (s) => s.status === "rejected"
+        ).length;
 
         try {
           const { success: bookingSuccess, bookings: providerBookings } =
@@ -116,95 +85,68 @@ const ProviderDashboardScreen: React.FC = () => {
               providerId: user.uid,
             });
 
-          console.log("📊 Booking query result:");
-          console.log("  Success:", bookingSuccess);
-          console.log("  Bookings count:", providerBookings?.length || 0);
-
+          // Count booking statuses
           let pendingCount = 0;
+          let confirmedCount = 0;
           let completedCount = 0;
+          let cancelledCount = 0;
           let earnings = 0;
 
           if (bookingSuccess && providerBookings) {
-            console.log("\n📋 Processing bookings...");
-
-            if (providerBookings.length === 0) {
-              console.log("⚠️ No bookings found for this provider");
-            } else {
-              console.log(`✅ Found ${providerBookings.length} booking(s):`);
-
-              providerBookings.forEach((booking, idx) => {
-                console.log(`\n  Booking ${idx + 1}:`);
-                console.log("    ID:", booking.id);
-                console.log("    Service:", booking.serviceName);
-                console.log("    Status:", booking.status);
-                console.log("    Price: Rs.", booking.price.toLocaleString());
-                console.log("    ProviderId:", booking.providerId);
-                console.log("    UserId:", booking.userId);
-                console.log("    Date:", booking.date);
-
-                if (booking.status === "pending") {
+            providerBookings.forEach((booking) => {
+              switch (booking.status) {
+                case "pending":
                   pendingCount++;
-                  console.log("    ✅ Counted as PENDING");
-                }
-                if (booking.status === "completed") {
+                  break;
+                case "confirmed":
+                  confirmedCount++;
+                  break;
+                case "completed":
                   completedCount++;
                   earnings += booking.price;
-                  console.log(
-                    "    💰 Counted as COMPLETED - Added Rs.",
-                    booking.price.toLocaleString(),
-                    "to earnings"
-                  );
-                }
-              });
-            }
+                  break;
+                case "cancelled":
+                  cancelledCount++;
+                  break;
+              }
+            });
           }
-
-          console.log("\n📊 Final Stats Calculation:");
-          console.log("  Total Services:", myServices.length);
-          console.log("  Pending Bookings:", pendingCount);
-          console.log("  Completed Bookings:", completedCount);
-          console.log(
-            "  Total Earnings: Rs.",
-            earnings.toLocaleString(),
-            `(from ${completedCount} completed booking${completedCount !== 1 ? "s" : ""})`
-          );
 
           setStats({
             totalServices: myServices.length,
+            pendingServices,
+            approvedServices,
+            rejectedServices,
             pendingBookings: pendingCount,
+            confirmedBookings: confirmedCount,
             completedBookings: completedCount,
+            cancelledBookings: cancelledCount,
             totalEarnings: earnings,
           });
-        } catch (bookingError: any) {
-          console.error("\n❌ Error loading bookings:");
-          console.error("  Message:", bookingError?.message || "Unknown error");
-          console.error("  Code:", bookingError?.code);
-          console.error("  Full error:", bookingError);
-          // Stats already updated with service count, just keep default values for bookings
-        }
+        } catch (bookingError: any) {}
       } else {
         console.log("❌ Failed to fetch services or no services returned");
       }
     } catch (error: any) {
-      console.error("\n❌ Error loading provider data:");
-      console.error("  Message:", error?.message);
-      console.error("  Stack:", error?.stack);
       // Set empty state on error
       setServices([]);
       setStats({
         totalServices: 0,
+        pendingServices: 0,
+        approvedServices: 0,
+        rejectedServices: 0,
         pendingBookings: 0,
+        confirmedBookings: 0,
         completedBookings: 0,
+        cancelledBookings: 0,
         totalEarnings: 0,
       });
     } finally {
       setLoading(false);
-      console.log("🔍 ===== PROVIDER DASHBOARD DATA LOAD END =====\n");
     }
   };
 
   const onRefresh = async () => {
-    console.log("🔄 Pull to refresh triggered");
     setRefreshing(true);
 
     // Update past bookings for this user before reloading
@@ -256,10 +198,78 @@ const ProviderDashboardScreen: React.FC = () => {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
-        {/* Stats Grid with Glassmorphism */}
-        <View className="px-6  mb-6">
-          {/* First Row - Service Status Breakdown */}
-          <View className="flex-row gap-3 mb-3">
+        {/* Stats Grid with Three Sections */}
+        <View className="px-6 mb-6">
+          {/* Section 1: Booking Overview */}
+          <Text className="text-gray-900 text-lg font-bold mb-3">
+            Booking Overview
+          </Text>
+          <View className="flex-row gap-3 mb-6">
+            {/* Pending Bookings */}
+            <TouchableOpacity
+              onPress={() => navigation.navigate("ProviderBookings")}
+              style={styles.statCard}
+              className="flex-1"
+            >
+              <View
+                style={[styles.iconContainer, { backgroundColor: "#FFEDD5" }]}
+              >
+                <Ionicons name="calendar" size={22} color="#F97316" />
+              </View>
+              <Text className="text-2xl font-bold text-gray-900 mt-2">
+                {stats.pendingBookings}
+              </Text>
+              <Text className="text-gray-600 text-xs font-medium">Pending</Text>
+            </TouchableOpacity>
+
+            {/* Confirmed Bookings */}
+            <TouchableOpacity
+              onPress={() => navigation.navigate("ProviderBookings")}
+              style={styles.statCard}
+              className="flex-1"
+            >
+              <View
+                style={[styles.iconContainer, { backgroundColor: "#DBEAFE" }]}
+              >
+                <Ionicons name="checkmark-circle" size={22} color="#3B82F6" />
+              </View>
+              <Text className="text-2xl font-bold text-gray-900 mt-2">
+                {stats.confirmedBookings}
+              </Text>
+              <Text className="text-gray-600 text-xs font-medium">
+                Confirmed
+              </Text>
+            </TouchableOpacity>
+
+            {/* Completed Bookings */}
+            <TouchableOpacity
+              onPress={() => navigation.navigate("ProviderBookings")}
+              style={styles.statCard}
+              className="flex-1"
+            >
+              <View
+                style={[styles.iconContainer, { backgroundColor: "#D1FAE5" }]}
+              >
+                <Ionicons
+                  name="checkmark-done-circle"
+                  size={22}
+                  color="#10B981"
+                />
+              </View>
+              <Text className="text-2xl font-bold text-gray-900 mt-2">
+                {stats.completedBookings}
+              </Text>
+              <Text className="text-gray-600 text-xs font-medium">
+                Completed
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Section 2: Service Status */}
+          <Text className="text-gray-900 text-lg font-bold mb-3">
+            Service Status
+          </Text>
+          <View className="flex-row gap-3 mb-6">
             {/* Pending Approval */}
             <TouchableOpacity
               onPress={() => navigation.navigate("UserServices")}
@@ -272,11 +282,9 @@ const ProviderDashboardScreen: React.FC = () => {
                 <Ionicons name="time" size={22} color="#F59E0B" />
               </View>
               <Text className="text-2xl font-bold text-gray-900 mt-2">
-                {services.filter((s) => s.status === "pending").length}
+                {stats.pendingServices}
               </Text>
-              <Text className="text-gray-600 text-xs font-medium">
-                Pending Approval
-              </Text>
+              <Text className="text-gray-600 text-xs font-medium">Pending</Text>
             </TouchableOpacity>
 
             {/* Approved Services */}
@@ -291,7 +299,7 @@ const ProviderDashboardScreen: React.FC = () => {
                 <Ionicons name="checkmark-circle" size={22} color="#10B981" />
               </View>
               <Text className="text-2xl font-bold text-gray-900 mt-2">
-                {services.filter((s) => s.status === "approved").length}
+                {stats.approvedServices}
               </Text>
               <Text className="text-gray-600 text-xs font-medium">
                 Approved
@@ -310,7 +318,7 @@ const ProviderDashboardScreen: React.FC = () => {
                 <Ionicons name="close-circle" size={22} color="#EF4444" />
               </View>
               <Text className="text-2xl font-bold text-gray-900 mt-2">
-                {services.filter((s) => s.status === "rejected").length}
+                {stats.rejectedServices}
               </Text>
               <Text className="text-gray-600 text-xs font-medium">
                 Rejected
@@ -318,37 +326,21 @@ const ProviderDashboardScreen: React.FC = () => {
             </TouchableOpacity>
           </View>
 
-          {/* Second Row - Bookings & Earnings */}
+          {/* Section 3: Performance */}
+          <Text className="text-gray-900 text-lg font-bold mb-3">
+            Performance
+          </Text>
           <View className="flex-row gap-3">
-            {/* Pending Jobs Card */}
+            {/* Total Earnings */}
             <TouchableOpacity
               onPress={() => navigation.navigate("ProviderBookings")}
               style={styles.statCard}
               className="flex-1"
             >
               <View
-                style={[styles.iconContainer, { backgroundColor: "#FFEDD5" }]}
+                style={[styles.iconContainer, { backgroundColor: "#EDE9FE" }]}
               >
-                <Ionicons name="calendar" size={22} color="#F97316" />
-              </View>
-              <Text className="text-2xl font-bold text-gray-900 mt-2">
-                {stats.pendingBookings}
-              </Text>
-              <Text className="text-gray-600 text-xs font-medium">
-                Pending Jobs
-              </Text>
-            </TouchableOpacity>
-
-            {/* Total Earnings Card */}
-            <TouchableOpacity
-              onPress={() => navigation.navigate("ProviderBookings")}
-              style={styles.statCard}
-              className="flex-1"
-            >
-              <View
-                style={[styles.iconContainer, { backgroundColor: "#DBEAFE" }]}
-              >
-                <Ionicons name="cash" size={22} color="#3B82F6" />
+                <Ionicons name="cash" size={22} color="#8B5CF6" />
               </View>
               <Text className="text-xl font-bold text-gray-900 mt-2">
                 Rs. {stats.totalEarnings.toLocaleString()}
@@ -358,6 +350,25 @@ const ProviderDashboardScreen: React.FC = () => {
               </Text>
               <Text className="text-gray-500 text-[10px] mt-0.5">
                 {stats.completedBookings} completed
+              </Text>
+            </TouchableOpacity>
+
+            {/* Total Services */}
+            <TouchableOpacity
+              onPress={() => navigation.navigate("UserServices")}
+              style={styles.statCard}
+              className="flex-1"
+            >
+              <View
+                style={[styles.iconContainer, { backgroundColor: "#F3F4F6" }]}
+              >
+                <Ionicons name="briefcase" size={22} color="#6B7280" />
+              </View>
+              <Text className="text-2xl font-bold text-gray-900 mt-2">
+                {stats.totalServices}
+              </Text>
+              <Text className="text-gray-600 text-xs font-medium">
+                Total Services
               </Text>
             </TouchableOpacity>
           </View>
@@ -388,7 +399,9 @@ const ProviderDashboardScreen: React.FC = () => {
             </TouchableOpacity>
 
             <TouchableOpacity
-              onPress={() => navigation.navigate("Bookings")}
+              onPress={() =>
+                navigation.navigate("MainTabs", { screen: "Bookings" })
+              }
               style={styles.actionButton}
               className="flex-1"
             >
@@ -406,7 +419,9 @@ const ProviderDashboardScreen: React.FC = () => {
             </TouchableOpacity>
 
             <TouchableOpacity
-              onPress={() => navigation.navigate("Profile")}
+              onPress={() =>
+                navigation.navigate("MainTabs", { screen: "Profile" })
+              }
               style={styles.actionButton}
               className="flex-1"
             >
