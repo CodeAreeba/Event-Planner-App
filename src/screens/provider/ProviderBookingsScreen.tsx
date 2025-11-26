@@ -272,7 +272,7 @@ const ProviderBookingsScreen: React.FC = () => {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
+    <SafeAreaView className="flex-1 bg-gray-50 mb-6" edges={["top"]}> 
       {/* Header */}
       <View className="bg-primary pt-4 pb-6 px-6">
         <View className="flex-row items-center mb-4">
@@ -335,7 +335,6 @@ const ProviderBookingsScreen: React.FC = () => {
           ))
         )}
       </ScrollView>
-
       {/* Rejection Modal */}
       <Modal
         visible={rejectModalVisible}
