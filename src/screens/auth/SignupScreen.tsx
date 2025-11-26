@@ -155,7 +155,7 @@ const SignupScreen: React.FC = () => {
                 {/* Form */}
                 <View>
                     <View className="mb-3">
-                        <View className="flex-row items-center bg-white rounded-full px-4 py-3 border border-gray-200">
+                        <View className="flex-row items-center bg-white rounded-full px-4 py-2 border border-gray-200">
                             <Ionicons name="person-outline" size={20} color="#9CA3AF" />
                             <TextInput
                                 value={name}
@@ -172,7 +172,7 @@ const SignupScreen: React.FC = () => {
                     </View>
 
                     <View className="mb-3">
-                        <View className="flex-row items-center bg-white rounded-full px-4 py-3 border border-gray-200">
+                        <View className="flex-row items-center bg-white rounded-full px-4 py-2 border border-gray-200">
                             <Ionicons name="mail-outline" size={20} color="#9CA3AF" />
                             <TextInput
                                 value={email}
@@ -191,7 +191,7 @@ const SignupScreen: React.FC = () => {
                     </View>
 
                     <View className="mb-3">
-                        <View className="flex-row items-center bg-white rounded-full px-4 py-3 border border-gray-200">
+                        <View className="flex-row items-center bg-white rounded-full px-4 py-2 border border-gray-200">
                             <Ionicons name="lock-closed-outline" size={20} color="#9CA3AF" />
                             <TextInput
                                 value={password}
@@ -216,7 +216,7 @@ const SignupScreen: React.FC = () => {
                     </View>
 
                     <View className="mb-4">
-                        <View className="flex-row items-center bg-white rounded-full px-4 py-3 border border-gray-200">
+                        <View className="flex-row items-center bg-white rounded-full px-4 py-2 border border-gray-200">
                             <Ionicons name="lock-closed-outline" size={20} color="#9CA3AF" />
                             <TextInput
                                 value={confirmPassword}
