@@ -186,7 +186,7 @@ const HomeScreen: React.FC = () => {
           className="gap-x-3"
         >
           <View
-            className="bg-white rounded-2xl p-4 shadow-sm"
+            className="bg-white rounded-2xl p-4 shadow-sm mr-3"
             style={{ width: 140 }}
           >
             <View className="w-10 h-10 bg-blue-100 rounded-full items-center justify-center mb-2">
@@ -199,7 +199,7 @@ const HomeScreen: React.FC = () => {
           </View>
 
           <View
-            className="bg-white rounded-2xl p-4 shadow-sm"
+            className="bg-white rounded-2xl p-4 shadow-sm mr-3"
             style={{ width: 140 }}
           >
             <View className="w-10 h-10 bg-green-100 rounded-full items-center justify-center mb-2">
@@ -212,7 +212,7 @@ const HomeScreen: React.FC = () => {
           </View>
 
           <View
-            className="bg-white rounded-2xl p-4 shadow-sm"
+            className="bg-white rounded-2xl p-4 shadow-sm mr-3"
             style={{ width: 140 }}
           >
             <View className="w-10 h-10 bg-purple-100 rounded-full items-center justify-center mb-2">
