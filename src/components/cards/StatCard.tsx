@@ -6,7 +6,7 @@ interface StatCardProps {
   icon: keyof typeof Ionicons.glyphMap;
   iconColor: string;
   iconBgColor: string;
-  value: string | number;
+  value: number | string;
   label: string;
 }
 

@@ -9,6 +9,7 @@ import {
   View,
 } from "react-native";
 import ServiceCard from "../../components/cards/ServiceCard";
+import StatCard from "../../components/common/StatCard";
 import SearchInput from "../../components/inputs/SearchInput";
 import EmptyState from "../../components/ui/EmptyState";
 import Loader from "../../components/ui/Loader";
@@ -182,51 +183,34 @@ const HomeScreen: React.FC = () => {
         }
       >
         {/* Quick Stats */}
-        <View className="px-6 mt-2 mb-3 ">
+        <View className="px-6 mt-4 mb-3 ">
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
             className="gap-x-3 z-1000"
           >
             <View className="flex flex-row gap-x-3">
-            <View
-              className="bg-white rounded-2xl p-4 shadow-sm "
-              style={{ width: 140 }}
-            >
-              <View className="w-10 h-10 bg-blue-100 rounded-full items-center justify-center mb-2">
-                <Ionicons name="calendar" size={20} color="#3B82F6" />
-              </View>
-              <Text className="text-2xl font-bold text-gray-900">
-                {bookingStats.total}
-              </Text>
-              <Text className="text-gray-500 text-xs">Total Bookings</Text>
-            </View>
-
-            <View
-              className="bg-white rounded-2xl p-4 shadow-sm "
-              style={{ width: 140 }}
-            >
-              <View className="w-10 h-10 bg-green-100 rounded-full items-center justify-center mb-2">
-                <Ionicons name="time" size={20} color="#10B981" />
-              </View>
-              <Text className="text-2xl font-bold text-gray-900">
-                {bookingStats.upcoming}
-              </Text>
-              <Text className="text-gray-500 text-xs">Upcoming</Text>
-            </View>
-
-            <View
-              className="bg-white rounded-2xl p-4 shadow-sm "
-              style={{ width: 140 }}
-            >
-              <View className="w-10 h-10 bg-purple-100 rounded-full items-center justify-center mb-2">
-                <Ionicons name="checkmark-circle" size={20} color="#8B5CF6" />
-              </View>
-              <Text className="text-2xl font-bold text-gray-900">
-                {bookingStats.completed}
-              </Text>
-              <Text className="text-gray-500 text-xs">Completed</Text>
-            </View>
+              <StatCard
+                icon="calendar"
+                iconColor="#3B82F6"
+                iconBgColor="#DBEAFE"
+                value={bookingStats.total}
+                label="Total Bookings"
+              />
+              <StatCard
+                icon="time"
+                iconColor="#10B981"
+                iconBgColor="#D1FAE5"
+                value={bookingStats.upcoming}
+                label="Upcoming"
+              />
+              <StatCard
+                icon="checkmark-circle"
+                iconColor="#8B5CF6"
+                iconBgColor="#EDE9FE"
+                value={bookingStats.completed}
+                label="Completed"
+              />
             </View>
           </ScrollView>
         </View>

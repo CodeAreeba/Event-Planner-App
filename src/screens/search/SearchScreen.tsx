@@ -127,7 +127,7 @@ const SearchScreen: React.FC = () => {
 
             {/* Results */}
             <ScrollView
-                className="flex-1 px-6 pt-4"
+                className="flex-1 px-6 pt-4 "
                 showsVerticalScrollIndicator={false}
             >
                 {filteredServices.length === 0 ? (
@@ -141,7 +141,7 @@ const SearchScreen: React.FC = () => {
                         }
                     />
                 ) : (
-                    <>
+                    <View className='pb-24'>
                         {filteredServices.map((service) => (
                             <ServiceCard
                                 key={service.id}
@@ -152,7 +152,7 @@ const SearchScreen: React.FC = () => {
                             />
                         ))}
                         <View className="h-6" />
-                    </>
+                    </View>
                 )}
             </ScrollView>
         </View>
