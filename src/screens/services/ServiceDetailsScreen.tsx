@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Linking, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { getUserProfile } from '../../firebase/auth';
 import { getServiceById } from '../../firebase/services';
 import { AppStackNavigationProp, AppStackParamList } from '../../types/navigation';
 import { Service } from '../../types/service';
@@ -17,6 +18,7 @@ const ServiceDetailsScreen: React.FC = () => {
     const [service, setService] = useState<Service | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [providerPhone, setProviderPhone] = useState<string | null>(null);
 
     useEffect(() => {
         loadService();
@@ -30,11 +32,66 @@ const ServiceDetailsScreen: React.FC = () => {
 
         if (success && fetchedService) {
             setService(fetchedService);
+            // Fetch provider phone number
+            loadProviderPhone(fetchedService.providerId);
         } else {
             setError(fetchError || 'Failed to load service');
         }
 
         setLoading(false);
+    };
+
+    const loadProviderPhone = async (providerId: string) => {
+        try {
+            const { success, profile } = await getUserProfile(providerId);
+            if (success && profile && profile.phone) {
+                setProviderPhone(profile.phone);
+            }
+        } catch (err) {
+            console.log('Could not fetch provider phone:', err);
+            // Don't show error to user, just don't display WhatsApp button
+        }
+    };
+
+    const openWhatsApp = async () => {
+        if (!providerPhone) {
+            Alert.alert('Error', 'Provider has no WhatsApp number.');
+            return;
+        }
+
+        if (!service) {
+            Alert.alert('Error', 'Service information not available.');
+            return;
+        }
+
+        try {
+            // Create detailed message with service information
+            const message = `Hello! I'm interested in your service:\n\n📋 *${service.title}*\n💰 Price: PKR ${service.price.toLocaleString()}\n⏱️ Duration: ${service.duration} minutes\n\nI would like to know more details about this service. Please let me know your availability.\n\nThank you!`;
+
+            // Clean phone number: remove all non-numeric characters
+            let cleanPhone = providerPhone.replace(/[^0-9]/g, '');
+
+            // Fix common issue: +0310... should be +92310...
+            // If phone starts with 0 (after removing +), replace with country code
+            if (cleanPhone.startsWith('0')) {
+                cleanPhone = '92' + cleanPhone.substring(1);
+            }
+            // If phone doesn't start with country code, add Pakistan code
+            else if (!cleanPhone.startsWith('92') && cleanPhone.length === 10) {
+                cleanPhone = '92' + cleanPhone;
+            }
+
+            const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+
+            const canOpen = await Linking.canOpenURL(url);
+            if (canOpen) {
+                await Linking.openURL(url);
+            } else {
+                Alert.alert('Error', 'Unable to open WhatsApp.');
+            }
+        } catch (err) {
+            Alert.alert('Error', 'Unable to open WhatsApp.');
+        }
     };
 
     const handleBookNow = () => {
@@ -132,19 +189,34 @@ const ServiceDetailsScreen: React.FC = () => {
                 </View>
             </ScrollView>
 
-            {/* Fixed Bottom Button */}
+            {/* Fixed Bottom Buttons */}
             <View className="bg-white border-t border-gray-200 px-6 py-4">
-                <TouchableOpacity
-                    onPress={handleBookNow}
-                    disabled={!service.isActive}
-                    className={`${service.isActive ? 'bg-primary' : 'bg-gray-400'} rounded-xl py-4 flex-row items-center justify-center shadow-lg`}
-                    activeOpacity={0.8}
-                >
-                    <Ionicons name="calendar" size={20} color="white" />
-                    <Text className="text-white text-lg font-bold ml-2">
-                        {service.isActive ? 'Book Now' : 'Currently Unavailable'}
-                    </Text>
-                </TouchableOpacity>
+                <View className={`flex-row ${providerPhone ? 'gap-3' : ''}`}>
+                    {/* WhatsApp Button - Only show if provider has phone */}
+                    {providerPhone && (
+                        <TouchableOpacity
+                            onPress={openWhatsApp}
+                            className="bg-[#25D366] rounded-xl py-4 flex-row items-center justify-center shadow-lg flex-1"
+                            activeOpacity={0.8}
+                        >
+                            <Ionicons name="logo-whatsapp" size={20} color="white" />
+                            <Text className="text-white text-lg font-bold ml-2">Chat</Text>
+                        </TouchableOpacity>
+                    )}
+
+                    {/* Book Now Button */}
+                    <TouchableOpacity
+                        onPress={handleBookNow}
+                        disabled={!service.isActive}
+                        className={`${service.isActive ? 'bg-primary' : 'bg-gray-400'} rounded-xl py-4 flex-row items-center justify-center shadow-lg ${providerPhone ? 'flex-1' : 'flex-1'}`}
+                        activeOpacity={0.8}
+                    >
+                        <Ionicons name="calendar" size={20} color="white" />
+                        <Text className="text-white text-lg font-bold ml-2">
+                            {service.isActive ? 'Book Now' : 'Currently Unavailable'}
+                        </Text>
+                    </TouchableOpacity>
+                </View>
             </View>
         </SafeAreaView>
     );

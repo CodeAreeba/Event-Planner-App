@@ -24,11 +24,10 @@ service cloud.firestore {
     
     // Users collection
     match /users/{userId} {
-      // Users can ALWAYS read their own profile (no isActiveUser check to avoid circular dependency)
+      // Users can read their own profile
       // Admins can read all users
-      // Authenticated users can read other users' basic profiles
-      allow read: if isAuthenticated() && 
-                     (request.auth.uid == userId || isAdmin());
+      // Any authenticated user can read other users' profiles (needed for provider info, etc.)
+      allow read: if isAuthenticated();
       
       // Users can CREATE their own profile during signup (even if not authenticated yet)
       // This allows signup to work smoothly without brief login/logout

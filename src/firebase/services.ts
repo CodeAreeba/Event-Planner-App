@@ -60,6 +60,7 @@ export const getAllServices = async (): Promise<{ success: boolean; services?: S
 /**
  * Get active services only (Users)
  * Includes fallback for missing Firestore index
+ * Only returns approved services (excludes rejected and pending)
  */
 export const getActiveServices = async (): Promise<{ success: boolean; services?: Service[]; error?: string }> => {
     try {
@@ -67,6 +68,7 @@ export const getActiveServices = async (): Promise<{ success: boolean; services?
         const q = query(
             collection(db, 'services'),
             where('isActive', '==', true),
+            where('status', '==', 'approved'),
             orderBy('createdAt', 'desc')
         );
         const querySnapshot = await getDocs(q);
@@ -83,7 +85,8 @@ export const getActiveServices = async (): Promise<{ success: boolean; services?
             try {
                 const fallbackQuery = query(
                     collection(db, 'services'),
-                    where('isActive', '==', true)
+                    where('isActive', '==', true),
+                    where('status', '==', 'approved')
                 );
                 const querySnapshot = await getDocs(fallbackQuery);
 
@@ -128,6 +131,7 @@ export const subscribeToServices = (
             q = query(
                 collection(db, 'services'),
                 where('isActive', '==', true),
+                where('status', '==', 'approved'),
                 orderBy('createdAt', 'desc')
             );
         }
@@ -152,7 +156,11 @@ export const subscribeToServices = (
 
                     let fallbackQuery = query(collection(db, 'services'));
                     if (activeOnly) {
-                        fallbackQuery = query(collection(db, 'services'), where('isActive', '==', true));
+                        fallbackQuery = query(
+                            collection(db, 'services'),
+                            where('isActive', '==', true),
+                            where('status', '==', 'approved')
+                        );
                     }
 
                     unsubscribeRef = onSnapshot(
