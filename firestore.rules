@@ -104,7 +104,36 @@ service cloud.firestore {
       // Users can delete their own bookings
       allow delete: if isAdmin() ||
                        (isAuthenticated() && 
-                        request.auth.uid == resource.data.userId);
+                         request.auth.uid == resource.data.userId);
+    }
+    
+    // Provider Services (Time Slots) collection
+    // IMPORTANT: Public read access for booking functionality
+    match /providerServices/{serviceSlotId} {
+      // Allow ANYONE to read slots (needed for users to see availability)
+      // This is safe because slots only contain scheduling info, no sensitive data
+      allow read: if true;
+      
+      // Admins can create any service slots (for migration and management)
+      // Providers can create their own service slots
+      // Authenticated users can create slots (for migration script)
+      allow create: if isAdmin() || 
+                       (isAuthenticated() && 
+                        (isProvider() || request.resource.data.providerId != null));
+      
+      // Admins can update/delete any service slots
+      // Providers can update/delete their own service slots
+      // Users can update slots when booking (to mark as unavailable)
+      allow update: if isAdmin() || 
+                       (isAuthenticated() && 
+                        (isProvider() && resource.data.providerId == request.auth.uid)) ||
+                       isAuthenticated();
+      
+      // Admins and providers can delete their own slots
+      allow delete: if isAdmin() || 
+                       (isAuthenticated() && 
+                        isProvider() &&
+                        resource.data.providerId == request.auth.uid);
     }
   }
 }

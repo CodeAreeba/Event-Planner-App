@@ -3,6 +3,7 @@ import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Linking, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import AvailabilityCalendar from '../../components/calendar/AvailabilityCalendar';
 import { getUserProfile } from '../../firebase/auth';
 import { getServiceById } from '../../firebase/services';
 import { AppStackNavigationProp, AppStackParamList } from '../../types/navigation';
@@ -19,6 +20,8 @@ const ServiceDetailsScreen: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [providerPhone, setProviderPhone] = useState<string | null>(null);
+    const [providerName, setProviderName] = useState<string | null>(null);
+    const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
 
     useEffect(() => {
         loadService();
@@ -44,11 +47,16 @@ const ServiceDetailsScreen: React.FC = () => {
     const loadProviderPhone = async (providerId: string) => {
         try {
             const { success, profile } = await getUserProfile(providerId);
-            if (success && profile && profile.phone) {
-                setProviderPhone(profile.phone);
+            if (success && profile) {
+                if (profile.phone) {
+                    setProviderPhone(profile.phone);
+                }
+                if (profile.name) {
+                    setProviderName(profile.name);
+                }
             }
         } catch (err) {
-            console.log('Could not fetch provider phone:', err);
+            console.log('Could not fetch provider profile:', err);
             // Don't show error to user, just don't display WhatsApp button
         }
     };
@@ -96,8 +104,15 @@ const ServiceDetailsScreen: React.FC = () => {
 
     const handleBookNow = () => {
         if (service) {
-            navigation.navigate('CreateBooking', { serviceId: service.id });
+            navigation.navigate('CreateBooking', {
+                serviceId: service.id,
+                preSelectedDate: selectedDate,
+            });
         }
+    };
+
+    const handleDateSelect = (date: Date) => {
+        setSelectedDate(date);
     };
 
     if (loading) {
@@ -173,6 +188,20 @@ const ServiceDetailsScreen: React.FC = () => {
                             </View>
                         </View>
                     </View>
+
+                    {/* Availability Calendar */}
+                    {service.isActive && (
+                        <View className="mb-6">
+                            <AvailabilityCalendar
+                                providerId={service.createdBy}
+                                providerName={providerName || undefined}
+                                serviceDuration={service.duration}
+                                selectedDate={selectedDate}
+                                onDateSelect={handleDateSelect}
+                                minDate={new Date()}
+                            />
+                        </View>
+                    )}
 
                     {/* Additional Info Card */}
                     <View className="bg-blue-50 rounded-2xl p-6 mb-6 border border-blue-100">

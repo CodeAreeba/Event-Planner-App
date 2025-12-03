@@ -11,12 +11,14 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import SlotSelector from "../../components/booking/SlotSelector";
 import PrimaryButton from "../../components/buttons/PrimaryButton";
 import SecondaryButton from "../../components/buttons/SecondaryButton";
 import FormInput from "../../components/common/FormInput";
 import ServicePicker from "../../components/pickers/ServicePicker";
 import { useAuth } from "../../context/AuthContext";
 import { createBooking } from "../../firebase/bookings";
+import { updateSlotAvailability } from "../../firebase/providerServices";
 import { getServiceById } from "../../firebase/services";
 import {
   AppStackNavigationProp,
@@ -85,6 +87,10 @@ const CreateBookingScreen: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [loadingService, setLoadingService] = useState(false);
 
+  // Slot-based booking state
+  const [bookingMode, setBookingMode] = useState<'manual' | 'slot'>('slot'); // Default to slot mode
+  const [selectedSlot, setSelectedSlot] = useState<string>("");
+
   // Validation errors
   const [errors, setErrors] = useState({
     service: "",
@@ -148,6 +154,8 @@ const CreateBookingScreen: React.FC = () => {
     console.log("  Service Price:", selectedService.price);
     console.log("  Created By (Provider ID):", selectedService.createdBy);
     console.log("  Duration:", selectedService.duration, "minutes");
+    console.log("  Booking Mode:", bookingMode);
+    console.log("  Selected Slot:", selectedSlot || "N/A");
 
     setLoading(true);
 
@@ -210,6 +218,24 @@ const CreateBookingScreen: React.FC = () => {
     }
 
     const { success, bookingId } = await createBooking(bookingData);
+
+    // If booking was made via slot, mark the slot as unavailable
+    if (success && bookingMode === 'slot' && selectedSlot && selectedService.id) {
+      console.log("\n🔄 Updating slot availability...");
+      const slotResult = await updateSlotAvailability(
+        selectedService.id,
+        date,
+        selectedSlot,
+        false // Mark as unavailable
+      );
+
+      if (slotResult.success) {
+        console.log("✅ Slot marked as unavailable");
+      } else {
+        console.warn("⚠️ Failed to update slot availability:", slotResult.error);
+      }
+    }
+
     setLoading(false);
 
     if (success) {
@@ -250,6 +276,21 @@ const CreateBookingScreen: React.FC = () => {
   const handleServiceSelect = (service: Service) => {
     setSelectedService(service);
     setErrors({ ...errors, service: "" });
+  };
+
+  const handleSlotSelect = (slotTime: string) => {
+    setSelectedSlot(slotTime);
+    setTime(slotTime); // Also update the time field
+    setErrors({ ...errors, time: "" });
+  };
+
+  const handleBookingModeChange = (mode: 'manual' | 'slot') => {
+    setBookingMode(mode);
+    // Clear time selection when switching modes
+    if (mode === 'slot') {
+      setSelectedSlot("");
+      setTime("");
+    }
   };
 
   return (
@@ -326,38 +367,83 @@ const CreateBookingScreen: React.FC = () => {
           />
         )}
 
+        {/* Booking Mode Toggle */}
         <View className="mb-4">
           <Text className="text-gray-700 text-sm font-semibold mb-2">
-            Time <Text className="text-red-500">*</Text>
+            Booking Method
           </Text>
-          <TouchableOpacity
-            onPress={() => setShowTimePicker(true)}
-            className="flex-row items-center bg-white rounded-xl px-4 py-3 border border-gray-200"
-          >
-            <Ionicons
-              name="time-outline"
-              size={20}
-              color="#9CA3AF"
-              style={{ marginRight: 12 }}
-            />
-            <Text
-              className={`flex-1 text-sm ${time ? "text-gray-900" : "text-gray-400"}`}
+          <View className="flex-row bg-white rounded-xl p-1 border border-gray-200">
+            <TouchableOpacity
+              onPress={() => handleBookingModeChange('slot')}
+              className={`flex-1 py-2 rounded-lg ${bookingMode === 'slot' ? 'bg-primary' : 'bg-transparent'}`}
             >
-              {time || "Select time"}
-            </Text>
-          </TouchableOpacity>
-          {errors.time ? (
-            <Text className="text-red-500 text-xs mt-1">{errors.time}</Text>
-          ) : null}
+              <Text className={`text-center font-semibold ${bookingMode === 'slot' ? 'text-white' : 'text-gray-600'}`}>
+                📅 Select Slot
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => handleBookingModeChange('manual')}
+              className={`flex-1 py-2 rounded-lg ${bookingMode === 'manual' ? 'bg-primary' : 'bg-transparent'}`}
+            >
+              <Text className={`text-center font-semibold ${bookingMode === 'manual' ? 'text-white' : 'text-gray-600'}`}>
+                ⏰ Manual Time
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
-        {showTimePicker && (
-          <DateTimePicker
-            value={timeDate}
-            mode="time"
-            display="default"
-            onChange={onTimeChange}
-          />
+        {/* Slot-based booking */}
+        {bookingMode === 'slot' && selectedService && (
+          <View className="mb-4">
+            <SlotSelector
+              serviceId={selectedService.id || ''}
+              selectedDate={date}
+              selectedSlot={selectedSlot}
+              onSlotSelect={handleSlotSelect}
+            />
+            {errors.time ? (
+              <Text className="text-red-500 text-xs mt-1">{errors.time}</Text>
+            ) : null}
+          </View>
+        )}
+
+        {/* Manual time picker */}
+        {bookingMode === 'manual' && (
+          <>
+            <View className="mb-4">
+              <Text className="text-gray-700 text-sm font-semibold mb-2">
+                Time <Text className="text-red-500">*</Text>
+              </Text>
+              <TouchableOpacity
+                onPress={() => setShowTimePicker(true)}
+                className="flex-row items-center bg-white rounded-xl px-4 py-3 border border-gray-200"
+              >
+                <Ionicons
+                  name="time-outline"
+                  size={20}
+                  color="#9CA3AF"
+                  style={{ marginRight: 12 }}
+                />
+                <Text
+                  className={`flex-1 text-sm ${time ? "text-gray-900" : "text-gray-400"}`}
+                >
+                  {time || "Select time"}
+                </Text>
+              </TouchableOpacity>
+              {errors.time ? (
+                <Text className="text-red-500 text-xs mt-1">{errors.time}</Text>
+              ) : null}
+            </View>
+
+            {showTimePicker && (
+              <DateTimePicker
+                value={timeDate}
+                mode="time"
+                display="default"
+                onChange={onTimeChange}
+              />
+            )}
+          </>
         )}
 
         <FormInput

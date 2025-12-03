@@ -39,19 +39,53 @@ const AddServiceScreen: React.FC = () => {
             isActive: true,
         };
 
-        const { success, error } = await createService(serviceData, user.uid, userProfile.name);
+        const { success, error, serviceId } = await createService(serviceData, user.uid, userProfile.name);
 
-        if (success) {
-            Alert.alert('Success', 'Service created successfully', [
-                {
-                    text: 'OK',
-                    onPress: () => navigation.goBack(),
-                },
-            ]);
+        if (success && serviceId) {
+            // Auto-generate time slots for the next 30 days
+            try {
+                const { createProviderServiceSlots } = await import('../../firebase/providerServices');
+                const { getDefaultWorkingHours } = await import('../../utils/slotGenerator');
+
+                const slotResult = await createProviderServiceSlots({
+                    serviceId,
+                    providerId: user.uid,
+                    serviceName: data.title,
+                    serviceDuration: data.duration,
+                    workingHours: getDefaultWorkingHours(),
+                    numberOfDays: 30,
+                    bufferMinutes: 15,
+                });
+
+                if (slotResult.success) {
+                    console.log(`✅ Generated ${slotResult.createdCount} days of time slots`);
+                    Alert.alert(
+                        'Success',
+                        `Service created successfully with ${slotResult.createdCount} days of available booking slots!`,
+                        [{ text: 'OK', onPress: () => navigation.goBack() }]
+                    );
+                } else {
+                    // Service created but slots failed - still show success
+                    console.warn('⚠️ Service created but slot generation failed:', slotResult.error);
+                    Alert.alert(
+                        'Service Created',
+                        'Service created successfully, but automatic time slot generation encountered an issue. You can still receive bookings.',
+                        [{ text: 'OK', onPress: () => navigation.goBack() }]
+                    );
+                }
+            } catch (slotError) {
+                console.error('❌ Error generating slots:', slotError);
+                Alert.alert(
+                    'Service Created',
+                    'Service created successfully, but automatic time slot generation encountered an issue. You can still receive bookings.',
+                    [{ text: 'OK', onPress: () => navigation.goBack() }]
+                );
+            }
         } else {
             Alert.alert('Error', error || 'Failed to create service');
         }
     };
+
 
     // Show access denied message if not authorized
     if (!canAddService) {

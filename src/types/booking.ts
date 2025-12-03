@@ -1,4 +1,4 @@
-export type BookingStatus = 'pending' | 'accepted' |'confirmed'| 'rejected' | 'completed' | 'cancelled';
+export type BookingStatus = 'pending' | 'accepted' | 'confirmed' | 'rejected' | 'completed' | 'cancelled';
 
 export interface Booking {
     id: string;
@@ -32,3 +32,30 @@ export interface BookingFormData {
     time: string;
     notes?: string;
 }
+
+// Availability Calendar Types
+export interface TimeSlot {
+    startTime: string;  // "09:00 AM"
+    endTime: string;    // "10:00 AM"
+    available: boolean;
+}
+
+export interface DayAvailability {
+    date: string;       // "2025-12-15"
+    hasAvailability: boolean;
+    totalSlots: number;
+    availableSlots: number;
+    timeSlots: TimeSlot[];
+}
+
+export interface ProviderAvailability {
+    providerId: string;
+    providerName?: string;
+    workingHours: {
+        start: string;  // "09:00 AM"
+        end: string;    // "06:00 PM"
+    };
+    bufferMinutes: number;  // 15
+    daysAvailability: Record<string, DayAvailability>;
+}
+

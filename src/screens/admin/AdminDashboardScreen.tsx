@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
 import {
+  Alert,
   RefreshControl,
   ScrollView,
   Text,
@@ -11,6 +12,7 @@ import {
 import { useAuth } from "../../context/AuthContext";
 import { getAnalytics, PlatformAnalytics } from "../../firebase/admin";
 import { AppStackNavigationProp } from "../../types/navigation";
+import { migrateExistingServices } from "../../utils/migrationHelper";
 
 const AdminDashboardScreen: React.FC = () => {
   const { userProfile } = useAuth();
@@ -35,6 +37,43 @@ const AdminDashboardScreen: React.FC = () => {
   const onRefresh = () => {
     setRefreshing(true);
     loadAnalytics();
+  };
+
+  const handleMigration = async () => {
+    Alert.alert(
+      '🔄 Generate Time Slots',
+      'This will generate 30 days of time slots for ALL existing services. Continue?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Start',
+          onPress: async () => {
+            try {
+              console.log('🚀 Starting migration...');
+              const result = await migrateExistingServices(
+                (current, total, serviceName) => {
+                  console.log(`[${current}/${total}] ${serviceName}`);
+                }
+              );
+
+              console.log('✅ Migration complete:', result);
+
+              Alert.alert(
+                'Migration Complete!',
+                `✅ Successfully migrated ${result.successfulMigrations} services\n❌ Failed: ${result.failedMigrations}`,
+                [{ text: 'OK' }]
+              );
+
+              // Refresh analytics
+              loadAnalytics();
+            } catch (error: any) {
+              console.error('❌ Migration error:', error);
+              Alert.alert('Error', error.message || 'Migration failed');
+            }
+          },
+        },
+      ]
+    );
   };
 
   const StatCard = ({
@@ -211,6 +250,13 @@ const AdminDashboardScreen: React.FC = () => {
             subtitle="Manage platform bookings"
             color="#F59E0B"
             onPress={() => navigation.navigate("ProviderBookings")}
+          />
+          <QuickActionCard
+            icon="flash-outline"
+            title="Generate Time Slots"
+            subtitle="Auto-generate slots for existing services"
+            color="#EC4899"
+            onPress={handleMigration}
           />
         </View>
 

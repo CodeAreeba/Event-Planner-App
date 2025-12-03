@@ -43,7 +43,7 @@ export const createBooking = async (
         console.log('\n💾 Saving booking to Firestore...');
 
         // Convert date to Firestore Timestamp if it's a Date object
-        const dateToSave = bookingData.date instanceof Date 
+        const dateToSave = bookingData.date instanceof Date
             ? Timestamp.fromDate(bookingData.date)
             : bookingData.date;
 
@@ -463,7 +463,7 @@ export const subscribeToBookings = (
 export const updatePastBookingsForUser = async (userId: string): Promise<{ success: boolean; updated: number }> => {
     try {
         const now = new Date();
-        
+
         // Get bookings where user is either the customer or provider
         const userBookingsQuery = query(
             collection(db, 'bookings'),
@@ -488,7 +488,7 @@ export const updatePastBookingsForUser = async (userId: string): Promise<{ succe
                         // Pending bookings (never confirmed) become cancelled
                         // Confirmed bookings become completed
                         const newStatus = data.status === 'pending' ? 'cancelled' : 'completed';
-                        
+
                         await updateDoc(doc(db, 'bookings', docSnapshot.id), {
                             status: newStatus,
                             updatedAt: Timestamp.now(),
@@ -538,6 +538,7 @@ export const updatePastBookingsStatus = async (): Promise<{ success: boolean; up
             }
         });
 
+
         await Promise.all(updatePromises);
         return { success: true, updated };
     } catch (error: any) {
@@ -545,3 +546,110 @@ export const updatePastBookingsStatus = async (): Promise<{ success: boolean; up
         return { success: false, updated: 0 };
     }
 };
+
+/**
+ * Get provider's future bookings for availability calculation
+ * @param providerId - Provider's user ID
+ * @param startDate - Start date for the range (optional)
+ * @param endDate - End date for the range (optional)
+ */
+export const getProviderFutureBookings = async (
+    providerId: string,
+    startDate?: Date,
+    endDate?: Date
+): Promise<{ success: boolean; bookings?: Booking[]; error?: string }> => {
+    try {
+        const now = new Date();
+        const start = startDate || now;
+        const end = endDate || new Date(now.getFullYear(), now.getMonth() + 3, 0); // 3 months ahead
+
+        // Query bookings for this provider
+        const constraints: any[] = [
+            where('providerId', '==', providerId),
+            where('status', 'in', ['pending', 'accepted', 'confirmed']),
+        ];
+
+        const q = query(collection(db, 'bookings'), ...constraints);
+        const querySnapshot = await getDocs(q);
+
+        let bookings: Booking[] = querySnapshot.docs.map((doc) => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                ...data,
+                date: data.date?.toDate ? data.date.toDate() : new Date(data.date),
+                createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt),
+                updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : new Date(data.updatedAt),
+            } as Booking;
+        });
+
+        // Filter by date range on client side
+        bookings = bookings.filter(booking => {
+            const bookingDate = booking.date instanceof Date ? booking.date : new Date(booking.date);
+            return bookingDate >= start && bookingDate <= end;
+        });
+
+        // Sort by date
+        bookings.sort((a, b) => {
+            const dateA = a.date instanceof Date ? a.date : new Date(a.date);
+            const dateB = b.date instanceof Date ? b.date : new Date(b.date);
+            return dateA.getTime() - dateB.getTime();
+        });
+
+        return { success: true, bookings };
+    } catch (error: any) {
+        console.error('Get provider future bookings error:', error);
+        return { success: false, error: error.message, bookings: [] };
+    }
+};
+
+/**
+ * Get bookings for a specific provider on a specific date
+ * @param providerId - Provider's user ID
+ * @param date - The date to check
+ */
+export const getProviderBookingsForDate = async (
+    providerId: string,
+    date: Date
+): Promise<{ success: boolean; bookings?: Booking[]; error?: string }> => {
+    try {
+        // Get the start and end of the day
+        const startOfDay = new Date(date);
+        startOfDay.setHours(0, 0, 0, 0);
+
+        const endOfDay = new Date(date);
+        endOfDay.setHours(23, 59, 59, 999);
+
+        // Query bookings for this provider
+        const q = query(
+            collection(db, 'bookings'),
+            where('providerId', '==', providerId),
+            where('status', 'in', ['pending', 'accepted', 'confirmed'])
+        );
+
+        const querySnapshot = await getDocs(q);
+
+        let bookings: Booking[] = querySnapshot.docs.map((doc) => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                ...data,
+                date: data.date?.toDate ? data.date.toDate() : new Date(data.date),
+                createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt),
+                updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : new Date(data.updatedAt),
+            } as Booking;
+        });
+
+        // Filter by date on client side
+        bookings = bookings.filter(booking => {
+            const bookingDate = booking.date instanceof Date ? booking.date : new Date(booking.date);
+            return bookingDate >= startOfDay && bookingDate <= endOfDay;
+        });
+
+        return { success: true, bookings };
+    } catch (error: any) {
+        console.error('Get provider bookings for date error:', error);
+        return { success: false, error: error.message, bookings: [] };
+    }
+};
+

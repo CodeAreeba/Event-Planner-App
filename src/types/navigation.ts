@@ -34,7 +34,7 @@ export type AppStackParamList = {
     UserServices: undefined;
     ProviderProfile: { providerId: string };
     BookingDetails: { bookingId: string };
-    CreateBooking: { serviceId?: string };
+    CreateBooking: { serviceId?: string; preSelectedDate?: Date };
     EditBooking: { bookingId: string };
     EditProfile: undefined;
     UserList: undefined;

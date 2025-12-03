@@ -154,29 +154,59 @@ export const getCurrentUser = (): User | null => {
 };
 
 /**
- * Get user profile from Firestore
+ * Get user profile from Firestore with retry logic for offline errors
  */
 export const getUserProfile = async (
-    uid: string
+    uid: string,
+    retries: number = 3
 ): Promise<{ success: boolean; profile?: UserProfile; error?: string }> => {
-    try {
-        console.log('📖 Fetching user profile for uid:', uid);
-        const docRef = doc(db, 'users', uid);
-        const docSnap = await getDoc(docRef);
+    let lastError: any;
 
-        if (docSnap.exists()) {
-            console.log('✅ User profile found:', docSnap.data());
-            return { success: true, profile: docSnap.data() as UserProfile };
-        } else {
-            console.warn('⚠️ User profile not found in Firestore for uid:', uid);
-            return { success: false, error: 'User profile not found' };
+    for (let attempt = 1; attempt <= retries; attempt++) {
+        try {
+            console.log(`📖 Fetching user profile for uid: ${uid} (attempt ${attempt}/${retries})`);
+            const docRef = doc(db, 'users', uid);
+            const docSnap = await getDoc(docRef);
+
+            if (docSnap.exists()) {
+                console.log('✅ User profile found:', docSnap.data());
+                return { success: true, profile: docSnap.data() as UserProfile };
+            } else {
+                console.warn('⚠️ User profile not found in Firestore for uid:', uid);
+                return { success: false, error: 'User profile not found' };
+            }
+        } catch (error: any) {
+            lastError = error;
+            const isOfflineError = error.code === 'unavailable' ||
+                error.message?.includes('offline') ||
+                error.message?.includes('network');
+
+            console.error(`❌ Get user profile error (attempt ${attempt}/${retries}):`, error);
+            console.error('   Error code:', error.code);
+            console.error('   Error message:', error.message);
+
+            // If it's an offline error and we have retries left, wait and retry
+            if (isOfflineError && attempt < retries) {
+                const waitTime = Math.min(1000 * Math.pow(2, attempt - 1), 5000); // Exponential backoff, max 5s
+                console.log(`⏳ Retrying in ${waitTime}ms...`);
+                await new Promise(resolve => setTimeout(resolve, waitTime));
+                continue;
+            }
+
+            // If not an offline error or out of retries, return error
+            if (attempt === retries) {
+                console.error('❌ All retry attempts exhausted');
+                return {
+                    success: false,
+                    error: isOfflineError
+                        ? 'Unable to connect. Please check your internet connection and try again.'
+                        : error.message
+                };
+            }
         }
-    } catch (error: any) {
-        console.error('❌ Get user profile error:', error);
-        console.error('   Error code:', error.code);
-        console.error('   Error message:', error.message);
-        return { success: false, error: error.message };
     }
+
+    return { success: false, error: lastError?.message || 'Failed to fetch user profile' };
 };
 
 /**
