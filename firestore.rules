@@ -74,13 +74,16 @@ service cloud.firestore {
                         isProvider() &&
                         request.auth.uid == request.resource.data.providerId);
       
-      // Admins can update/delete any slots
-      // Active providers can only update/delete their own slots
-      allow update, delete: if isAdmin() || 
-                               (isAuthenticated() && 
-                                isActiveUser(request.auth.uid) && 
-                                isProvider() && 
-                                request.auth.uid == resource.data.providerId);
+      // Any authenticated user can update slots (for booking purposes)
+      // This allows customers to mark slots as unavailable when booking
+      allow update: if isAuthenticated();
+      
+      // Only admins and providers can delete slots
+      allow delete: if isAdmin() || 
+                       (isAuthenticated() && 
+                        isActiveUser(request.auth.uid) && 
+                        isProvider() && 
+                        request.auth.uid == resource.data.providerId);
     }
     
     // Bookings collection
