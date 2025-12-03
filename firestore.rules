@@ -15,7 +15,6 @@ service cloud.firestore {
     }
     
     // Helper function to check if user is active (not blocked or deleted)
-    // Only use this for OTHER users' documents, not for reading your own profile
     function isActiveUser(uid) {
       return exists(/databases/$(database)/documents/users/$(uid)) &&
              get(/databases/$(database)/documents/users/$(uid)).data.get('status', 'active') == 'active' &&
@@ -24,23 +23,15 @@ service cloud.firestore {
     
     // Users collection
     match /users/{userId} {
-      // Users can read their own profile
-      // Admins can read all users
-      // Any authenticated user can read other users' profiles (needed for provider info, etc.)
       allow read: if isAuthenticated();
       
-      // Users can CREATE their own profile during signup (even if not authenticated yet)
-      // This allows signup to work smoothly without brief login/logout
       allow create: if (isAuthenticated() && request.auth.uid == userId) ||
                        (!exists(/databases/$(database)/documents/users/$(userId)) &&
                         request.resource.data.uid == userId &&
                         request.resource.data.role == 'user');
       
-      // Admins can create/update/delete any user
       allow write: if isAdmin();
       
-      // Users can update their own profile (except protected fields)
-      // No isActiveUser check here to avoid issues
       allow update: if isAuthenticated() && 
                        request.auth.uid == userId &&
                        !request.resource.data.diff(resource.data).affectedKeys()
@@ -56,17 +47,13 @@ service cloud.firestore {
     
     // Services collection
     match /services/{serviceId} {
-      // Anyone can read active services (public access for browsing)
       allow read: if true;
       
-      // Admins and active providers can create services
       allow create: if isAdmin() || 
                        (isAuthenticated() && 
                         isActiveUser(request.auth.uid) && 
                         isProvider());
       
-      // Admins can update/delete any service
-      // Active providers can only update/delete their own services
       allow update, delete: if isAdmin() || 
                                (isAuthenticated() && 
                                 isActiveUser(request.auth.uid) && 
@@ -74,66 +61,48 @@ service cloud.firestore {
                                 request.auth.uid == resource.data.createdBy);
     }
     
+    // Provider Services collection (time slots for services)
+    match /providerServices/{docId} {
+      // Anyone can read provider services/slots (needed for booking flow)
+      allow read: if true;
+      
+      // Admins can create any slots
+      // Providers can only create slots for their own services
+      allow create: if isAdmin() || 
+                       (isAuthenticated() && 
+                        isActiveUser(request.auth.uid) && 
+                        isProvider() &&
+                        request.auth.uid == request.resource.data.providerId);
+      
+      // Admins can update/delete any slots
+      // Active providers can only update/delete their own slots
+      allow update, delete: if isAdmin() || 
+                               (isAuthenticated() && 
+                                isActiveUser(request.auth.uid) && 
+                                isProvider() && 
+                                request.auth.uid == resource.data.providerId);
+    }
+    
     // Bookings collection
     match /bookings/{bookingId} {
-      // For reading a single document (get operation)
-      // Admins can read all bookings
-      // Users can read bookings where they are the user or provider
       allow get: if isAdmin() || 
                     (isAuthenticated() && 
                      (request.auth.uid == resource.data.userId || 
                       request.auth.uid == resource.data.providerId));
       
-      // For listing/querying documents (list operation)
-      // Allow any authenticated user to query bookings
-      // The app is responsible for filtering by userId or providerId
       allow list: if isAuthenticated();
       
-      // Only authenticated users can create bookings for themselves
       allow create: if isAuthenticated() && 
                        request.resource.data.userId == request.auth.uid;
       
-      // Admins can update all bookings
-      // Users can update their own bookings or bookings for their services
       allow update: if isAdmin() ||
                        (isAuthenticated() && 
                         (request.auth.uid == resource.data.userId || 
                          request.auth.uid == resource.data.providerId));
       
-      // Admins can delete all bookings
-      // Users can delete their own bookings
       allow delete: if isAdmin() ||
                        (isAuthenticated() && 
-                         request.auth.uid == resource.data.userId);
-    }
-    
-    // Provider Services (Time Slots) collection
-    // IMPORTANT: Public read access for booking functionality
-    match /providerServices/{serviceSlotId} {
-      // Allow ANYONE to read slots (needed for users to see availability)
-      // This is safe because slots only contain scheduling info, no sensitive data
-      allow read: if true;
-      
-      // Admins can create any service slots (for migration and management)
-      // Providers can create their own service slots
-      // Authenticated users can create slots (for migration script)
-      allow create: if isAdmin() || 
-                       (isAuthenticated() && 
-                        (isProvider() || request.resource.data.providerId != null));
-      
-      // Admins can update/delete any service slots
-      // Providers can update/delete their own service slots
-      // Users can update slots when booking (to mark as unavailable)
-      allow update: if isAdmin() || 
-                       (isAuthenticated() && 
-                        (isProvider() && resource.data.providerId == request.auth.uid)) ||
-                       isAuthenticated();
-      
-      // Admins and providers can delete their own slots
-      allow delete: if isAdmin() || 
-                       (isAuthenticated() && 
-                        isProvider() &&
-                        resource.data.providerId == request.auth.uid);
+                        request.auth.uid == resource.data.userId);
     }
   }
 }

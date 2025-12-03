@@ -88,7 +88,7 @@ const CreateBookingScreen: React.FC = () => {
   const [loadingService, setLoadingService] = useState(false);
 
   // Slot-based booking state
-  const [bookingMode, setBookingMode] = useState<'manual' | 'slot'>('slot'); // Default to slot mode
+  const [bookingMode, setBookingMode] = useState<"manual" | "slot">("slot"); // Default to slot mode
   const [selectedSlot, setSelectedSlot] = useState<string>("");
 
   // Validation errors
@@ -220,7 +220,12 @@ const CreateBookingScreen: React.FC = () => {
     const { success, bookingId } = await createBooking(bookingData);
 
     // If booking was made via slot, mark the slot as unavailable
-    if (success && bookingMode === 'slot' && selectedSlot && selectedService.id) {
+    if (
+      success &&
+      bookingMode === "slot" &&
+      selectedSlot &&
+      selectedService.id
+    ) {
       console.log("\n🔄 Updating slot availability...");
       const slotResult = await updateSlotAvailability(
         selectedService.id,
@@ -232,7 +237,10 @@ const CreateBookingScreen: React.FC = () => {
       if (slotResult.success) {
         console.log("✅ Slot marked as unavailable");
       } else {
-        console.warn("⚠️ Failed to update slot availability:", slotResult.error);
+        console.warn(
+          "⚠️ Failed to update slot availability:",
+          slotResult.error
+        );
       }
     }
 
@@ -274,6 +282,11 @@ const CreateBookingScreen: React.FC = () => {
   };
 
   const handleServiceSelect = (service: Service) => {
+    console.log("🎯 Service Selected:");
+    console.log("  Service ID:", service.id);
+    console.log("  Service Title:", service.title);
+    console.log("  Service Price:", service.price);
+    console.log("  Service Duration:", service.duration);
     setSelectedService(service);
     setErrors({ ...errors, service: "" });
   };
@@ -284,10 +297,10 @@ const CreateBookingScreen: React.FC = () => {
     setErrors({ ...errors, time: "" });
   };
 
-  const handleBookingModeChange = (mode: 'manual' | 'slot') => {
+  const handleBookingModeChange = (mode: "manual" | "slot") => {
     setBookingMode(mode);
     // Clear time selection when switching modes
-    if (mode === 'slot') {
+    if (mode === "slot") {
       setSelectedSlot("");
       setTime("");
     }
@@ -374,18 +387,22 @@ const CreateBookingScreen: React.FC = () => {
           </Text>
           <View className="flex-row bg-white rounded-xl p-1 border border-gray-200">
             <TouchableOpacity
-              onPress={() => handleBookingModeChange('slot')}
-              className={`flex-1 py-2 rounded-lg ${bookingMode === 'slot' ? 'bg-primary' : 'bg-transparent'}`}
+              onPress={() => handleBookingModeChange("slot")}
+              className={`flex-1 py-2 rounded-lg ${bookingMode === "slot" ? "bg-primary" : "bg-transparent"}`}
             >
-              <Text className={`text-center font-semibold ${bookingMode === 'slot' ? 'text-white' : 'text-gray-600'}`}>
+              <Text
+                className={`text-center font-semibold ${bookingMode === "slot" ? "text-white" : "text-gray-600"}`}
+              >
                 📅 Select Slot
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              onPress={() => handleBookingModeChange('manual')}
-              className={`flex-1 py-2 rounded-lg ${bookingMode === 'manual' ? 'bg-primary' : 'bg-transparent'}`}
+              onPress={() => handleBookingModeChange("manual")}
+              className={`flex-1 py-2 rounded-lg ${bookingMode === "manual" ? "bg-primary" : "bg-transparent"}`}
             >
-              <Text className={`text-center font-semibold ${bookingMode === 'manual' ? 'text-white' : 'text-gray-600'}`}>
+              <Text
+                className={`text-center font-semibold ${bookingMode === "manual" ? "text-white" : "text-gray-600"}`}
+              >
                 ⏰ Manual Time
               </Text>
             </TouchableOpacity>
@@ -393,10 +410,10 @@ const CreateBookingScreen: React.FC = () => {
         </View>
 
         {/* Slot-based booking */}
-        {bookingMode === 'slot' && selectedService && (
+        {bookingMode === "slot" && selectedService && (
           <View className="mb-4">
             <SlotSelector
-              serviceId={selectedService.id || ''}
+              serviceId={selectedService.id || ""}
               selectedDate={date}
               selectedSlot={selectedSlot}
               onSlotSelect={handleSlotSelect}
@@ -408,7 +425,7 @@ const CreateBookingScreen: React.FC = () => {
         )}
 
         {/* Manual time picker */}
-        {bookingMode === 'manual' && (
+        {bookingMode === "manual" && (
           <>
             <View className="mb-4">
               <Text className="text-gray-700 text-sm font-semibold mb-2">
