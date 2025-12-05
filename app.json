@@ -17,7 +17,8 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.testing_mail.EventPlannerApp"
+      "package": "com.testing_mail.EventPlannerApp",
+      "permissions": ["INTERNET"]
     },
     "web": {
       "output": "static",
@@ -25,6 +26,7 @@
     },
     "plugins": [
       "expo-router",
+      "./plugins/withWhatsAppQueries.js",
       [
         "expo-splash-screen",
         {
